@@ -1,122 +1,137 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import React, { useState } from 'react';
+import { CryptoProvider, useCrypto } from './context/CryptoContext';
+import { Navbar } from './components/Navbar';
+import { TickerBar } from './components/TickerBar';
+import { MarketDashboard } from './components/MarketDashboard';
+import { AIPredictionView } from './components/AIPredictionView';
+import { SimulatedTrading } from './components/SimulatedTrading';
+import { EducationSystem } from './components/EducationSystem';
+import { NewsSentiment } from './components/NewsSentiment';
+import { PortfolioView } from './components/PortfolioView';
+import { AdminPanel } from './components/AdminPanel';
+import { AIAssistantModal } from './components/AIAssistantModal';
+import { AuthModal } from './components/AuthModal';
+import { Toast } from './components/Toast';
+import { BrainCircuit } from 'lucide-react';
+import './App.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+function MainApp() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+
+  const { setActiveCoinId } = useCrypto();
+
+  const handleNavigateToPrediction = (coinId) => {
+    if (coinId) setActiveCoinId(coinId);
+    setActiveTab('prediction');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNavigateToTrading = (coinId) => {
+    if (coinId) setActiveCoinId(coinId);
+    setActiveTab('trading');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="crypto-app-root">
+      {/* 1. Global Live Ticker Bar */}
+      <TickerBar />
 
-      <div className="ticks"></div>
+      {/* 2. Top Header Navigation */}
+      <Navbar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onOpenAssistant={() => setIsAssistantOpen(true)}
+        onOpenAuth={() => setIsAuthOpen(true)}
+      />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {/* 3. Main Views Content Container */}
+      <main className="main-content-layout">
+        {activeTab === 'dashboard' && (
+          <MarketDashboard
+            onNavigateToPrediction={handleNavigateToPrediction}
+            onNavigateToTrading={handleNavigateToTrading}
+          />
+        )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        {activeTab === 'prediction' && (
+          <AIPredictionView onNavigateToTrading={handleNavigateToTrading} />
+        )}
+
+        {activeTab === 'trading' && <SimulatedTrading />}
+
+        {activeTab === 'education' && <EducationSystem />}
+
+        {activeTab === 'sentiment' && <NewsSentiment />}
+
+        {activeTab === 'portfolio' && (
+          <PortfolioView onNavigateToTrading={handleNavigateToTrading} />
+        )}
+
+        {activeTab === 'admin' && <AdminPanel />}
+      </main>
+
+      {/* 4. Global Floating AI Assistant Bubble */}
+      <button
+        className="floating-ai-fab"
+        onClick={() => setIsAssistantOpen(true)}
+        title="Open NeuroCrypto AI Assistant"
+      >
+        <div className="fab-glow-ring"></div>
+        <BrainCircuit size={24} className="text-cyan-400" />
+        <span className="fab-label">AI Explainer</span>
+      </button>
+
+      {/* 5. Modals & Drawers */}
+      <AIAssistantModal
+        isOpen={isAssistantOpen}
+        onClose={() => setIsAssistantOpen(false)}
+      />
+
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+      />
+
+      {/* 6. Notifications Toast System */}
+      <Toast />
+
+      {/* 7. Academic Footer */}
+      <footer className="crypto-footer">
+        <div className="footer-container">
+          <div className="footer-left">
+            <span className="footer-title">
+              AI-Based Crypto Market Prediction & Educational Assistant System
+            </span>
+            <p className="footer-subtitle">
+              MERN Stack Web Programming Final Project • Fast NUCES
+            </p>
+          </div>
+
+          <div className="footer-middle">
+            <div className="academic-authors">
+              <span className="author-tag">Farhan Ijaz (23L-0568)</span>
+              <span className="author-tag">Zain-ul-Abideen (23L-0858)</span>
+            </div>
+          </div>
+
+          <div className="footer-right">
+            <span className="disclaimer-mini">
+              Paper Trading & Educational Simulation • Zero Real-Money Risk
+            </span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
 }
 
-export default App
+export default function App() {
+  return (
+    <CryptoProvider>
+      <MainApp />
+    </CryptoProvider>
+  );
+}
