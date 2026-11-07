@@ -9,7 +9,9 @@ import {
   X,
   LogOut,
   Sliders,
-  Sparkles
+  Sparkles,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export const AuthModal = ({ isOpen, onClose }) => {
@@ -18,6 +20,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
   const [mode, setMode] = useState(user.isAuthenticated ? 'profile' : 'login'); // 'login' | 'signup' | 'profile'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [studentId, setStudentId] = useState('');
   const [selectedRole, setSelectedRole] = useState('student');
@@ -199,16 +202,22 @@ export const AuthModal = ({ isOpen, onClose }) => {
                 <label className="form-label">Password</label>
                 <div className="input-with-addon">
                   <input
-                    type="password"
-                    className="trade-input"
+                    type={showPassword ? 'text' : 'password'}
+                    className="trade-input password-input"
                     placeholder="••••••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
-                  <span className="input-addon">
-                    <Lock size={16} />
-                  </span>
+                  <button
+                    type="button"
+                    className="input-addon password-visibility-toggle"
+                    onClick={() => setShowPassword((visible) => !visible)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-pressed={showPassword}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
               </div>
 

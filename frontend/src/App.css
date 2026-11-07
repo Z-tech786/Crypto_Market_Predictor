@@ -1402,6 +1402,24 @@
   font-weight: 600;
 }
 
+.password-input {
+  padding-right: 42px;
+}
+
+.password-visibility-toggle {
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.password-visibility-toggle:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
 .percent-chips-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
