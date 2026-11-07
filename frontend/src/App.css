@@ -3206,18 +3206,7 @@
   border-color: var(--accent-cyan);
 }
 
-.btn-assistant-send {
-  background: var(--accent-cyan);
-  border: none;
-  color: #07090e;
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
+
 
 .btn-assistant-send:disabled {
   opacity: 0.4;
