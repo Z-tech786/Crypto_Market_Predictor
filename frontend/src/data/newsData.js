@@ -49,49 +49,5 @@ export const NEWS_ARTICLES = [
     impact: 'High Bullish',
     url: '#'
   },
-  {
-    id: 'news-5',
-    title: 'Regulatory Regulatory Clarifications Provide Framework for Stablecoin Yield Distribution',
-    source: 'CryptoPolicy Today',
-    time: '7 hours ago',
-    category: 'Regulation',
-    sentiment: 'Neutral',
-    sentimentScore: 0.15,
-    summary: 'Lawmakers in key international jurisdictions introduced bipartisan guidelines for bank-issued digital payment tokens and licensed custody standards.',
-    impact: 'Neutral / Long-term Bullish',
-    url: '#'
-  },
-  {
-    id: 'news-6',
-    title: 'Security Notice: Phishing Campaign Targets Unsuspecting Users via Malicious Browser Extensions',
-    source: 'ChainSec Alerts',
-    time: '10 hours ago',
-    category: 'Security / Alert',
-    sentiment: 'Negative',
-    sentimentScore: -0.68,
-    summary: 'Security researchers identified fake wallet popups seeking seed phrases. Users are urged to verify official extension hashes and employ hardware wallet signing.',
-    impact: 'Cautionary / Security',
-    url: '#'
-  }
-];
 
-export const SENTIMENT_METRICS = {
-  fearAndGreed: {
-    value: 72,
-    classification: 'Greed',
-    yesterday: 68,
-    lastWeek: 64,
-    lastMonth: 58
-  },
-  socialSentiment: {
-    positivePercent: 68,
-    neutralPercent: 20,
-    negativePercent: 12,
-    totalMentions24h: '1,420,000+'
-  },
-  whaleFlow: {
-    accumulationScore: '+78 / 100',
-    exchangeNetInflow: '-14,250 BTC (Outflow from exchanges into cold storage)',
-    interpretation: 'Strong Accumulation Phase'
-  }
 };

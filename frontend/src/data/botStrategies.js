@@ -71,29 +71,6 @@ export const INITIAL_PAPER_WALLET = {
       orderType: 'MARKET',
       strategy: 'Manual'
     },
-    {
-      id: 'tx-init-2',
-      type: 'BUY',
-      symbol: 'ETH',
-      amount: 0.95,
-      price: 3380.0,
-      total: 3211.0,
-      timestamp: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
-      status: 'FILLED',
-      orderType: 'LIMIT',
-      strategy: 'DCA Accumulator'
-    },
-    {
-      id: 'tx-init-3',
-      type: 'BUY',
-      symbol: 'SOL',
-      amount: 6.5,
-      price: 165.0,
-      total: 1072.5,
-      timestamp: new Date(Date.now() - 3600000 * 12).toISOString(),
-      status: 'FILLED',
-      orderType: 'MARKET',
-      strategy: 'AI-LSTM Momentum'
-    }
+ 
   ]
 };
