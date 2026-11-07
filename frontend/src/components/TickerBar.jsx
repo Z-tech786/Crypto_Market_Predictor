@@ -35,11 +35,13 @@ export const TickerBar = () => {
           {cryptos.concat(cryptos).map((coin, index) => {
             const isUp = coin.change24h >= 0;
             return (
-              <div
+              <button
+                type="button"
                 key={`${coin.id}-${index}`}
                 className="ticker-item"
                 onClick={() => setActiveCoinId(coin.id)}
                 title={`Click to view ${coin.name}`}
+                aria-label={`${coin.name}, ${formatUSD(coin.price)}, ${formatPercent(coin.change24h)} in 24 hours. Select to view.`}
               >
                 <span className="ticker-symbol">{coin.symbol}</span>
                 <span className="ticker-price">{formatUSD(coin.price)}</span>
@@ -47,7 +49,7 @@ export const TickerBar = () => {
                   {isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                   {formatPercent(coin.change24h)}
                 </span>
-              </div>
+              </button>
             );
           })}
         </div>

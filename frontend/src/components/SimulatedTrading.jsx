@@ -38,15 +38,36 @@ export const SimulatedTrading = () => {
   const holdingAmount = currentHolding ? currentHolding.amount : 0;
 
   // Selected execution price
-  const executionPrice = orderType === 'MARKET' ? activeCoin.price : parseFloat(limitPrice) || activeCoin.price;
-  const numAmount = parseFloat(amount) || 0;
+  const executionPrice = orderType === 'MARKET' ? activeCoin.price : Number(limitPrice);
+  const numAmount = Number(amount);
+  const isPriceValid = Number.isFinite(executionPrice) && executionPrice > 0;
+  const maxBuyAmount = isPriceValid
+    ? wallet.usdtBalance / (executionPrice * 1.001)
+    : 0;
   const orderValue = numAmount * executionPrice;
   const simulatedFee = orderValue * 0.001; // 0.1% simulated exchange fee
   const totalCost = tradeType === 'BUY' ? orderValue + simulatedFee : orderValue - simulatedFee;
+  const isAmountValid = Number.isFinite(numAmount) && numAmount > 0;
+  const hasSufficientBalance = totalCost <= wallet.usdtBalance;
+  const hasSufficientHolding = numAmount <= holdingAmount;
+  const canExecuteOrder =
+    isPriceValid &&
+    isAmountValid &&
+    (tradeType === 'BUY' ? hasSufficientBalance : hasSufficientHolding);
+  const orderValidationMessage = !isPriceValid && orderType === 'LIMIT'
+    ? 'Enter a limit price greater than zero.'
+    : amount && !isAmountValid
+      ? 'Enter an amount greater than zero.'
+      : tradeType === 'BUY' && isAmountValid && !hasSufficientBalance
+        ? 'This order exceeds your available USDT balance.'
+        : tradeType === 'SELL' && isAmountValid && !hasSufficientHolding
+          ? `You only have ${holdingAmount.toFixed(4)} ${activeCoin.symbol} available.`
+          : '';
 
   // Quick percentage buttons
   const handleQuickPercent = (pct) => {
     if (tradeType === 'BUY') {
+      if (!isPriceValid) return;
       const availableFunds = wallet.usdtBalance * pct;
       const calculatedAmount = availableFunds / (executionPrice * 1.001);
       setAmount((Math.floor(calculatedAmount * 10000) / 10000).toString());
@@ -58,7 +79,7 @@ export const SimulatedTrading = () => {
 
   const handleExecute = (e) => {
     e.preventDefault();
-    if (numAmount <= 0) return;
+    if (!canExecuteOrder) return;
 
     const success = executeTrade(
       tradeType,
@@ -185,6 +206,7 @@ export const SimulatedTrading = () => {
                   <input
                     type="number"
                     step="any"
+                    min="0"
                     className="trade-input font-mono"
                     value={limitPrice}
                     onChange={(e) => setLimitPrice(e.target.value)}
@@ -201,7 +223,7 @@ export const SimulatedTrading = () => {
                 <label className="form-label">Amount ({activeCoin.symbol})</label>
                 <span className="text-xs text-muted">
                   {tradeType === 'BUY'
-                    ? `Max: ${(wallet.usdtBalance / executionPrice).toFixed(4)} ${activeCoin.symbol}`
+                    ? `Max: ${maxBuyAmount.toFixed(4)} ${activeCoin.symbol}`
                     : `Available: ${holdingAmount.toFixed(4)} ${activeCoin.symbol}`}
                 </span>
               </div>
@@ -209,6 +231,7 @@ export const SimulatedTrading = () => {
                 <input
                   type="number"
                   step="any"
+                  min="0"
                   className="trade-input font-mono"
                   placeholder="0.00"
                   value={amount}
@@ -218,19 +241,44 @@ export const SimulatedTrading = () => {
                 <span className="input-addon">{activeCoin.symbol}</span>
               </div>
             </div>
+            {orderValidationMessage && (
+              <p className="order-validation-message" role="status">
+                {orderValidationMessage}
+              </p>
+            )}
 
             {/* Percentage Chips */}
             <div className="percent-chips-row">
-              <button type="button" className="pct-chip" onClick={() => handleQuickPercent(0.25)}>
+              <button
+                type="button"
+                className="pct-chip"
+                disabled={(tradeType === 'BUY' && !isPriceValid) || (tradeType === 'SELL' && holdingAmount <= 0)}
+                onClick={() => handleQuickPercent(0.25)}
+              >
                 25%
               </button>
-              <button type="button" className="pct-chip" onClick={() => handleQuickPercent(0.5)}>
+              <button
+                type="button"
+                className="pct-chip"
+                disabled={(tradeType === 'BUY' && !isPriceValid) || (tradeType === 'SELL' && holdingAmount <= 0)}
+                onClick={() => handleQuickPercent(0.5)}
+              >
                 50%
               </button>
-              <button type="button" className="pct-chip" onClick={() => handleQuickPercent(0.75)}>
+              <button
+                type="button"
+                className="pct-chip"
+                disabled={(tradeType === 'BUY' && !isPriceValid) || (tradeType === 'SELL' && holdingAmount <= 0)}
+                onClick={() => handleQuickPercent(0.75)}
+              >
                 75%
               </button>
-              <button type="button" className="pct-chip" onClick={() => handleQuickPercent(1.0)}>
+              <button
+                type="button"
+                className="pct-chip"
+                disabled={(tradeType === 'BUY' && !isPriceValid) || (tradeType === 'SELL' && holdingAmount <= 0)}
+                onClick={() => handleQuickPercent(1.0)}
+              >
                 100% Max
               </button>
             </div>
@@ -255,6 +303,7 @@ export const SimulatedTrading = () => {
             <button
               type="submit"
               className={`btn-execute-order ${tradeType === 'BUY' ? 'btn-buy' : 'btn-sell'}`}
+              disabled={!canExecuteOrder}
             >
               {tradeType === 'BUY' ? `Buy ${activeCoin.symbol}` : `Sell ${activeCoin.symbol}`} (Paper Order)
             </button>

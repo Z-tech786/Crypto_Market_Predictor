@@ -84,18 +84,31 @@
   animation-play-state: paused;
 }
 
+.ticker-content:focus-within {
+  animation-play-state: paused;
+}
+
 .ticker-item {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  cursor: pointer;
   padding: 4px 8px;
+  border: 0;
   border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
   transition: background 0.2s;
 }
 
 .ticker-item:hover {
   background: rgba(255, 255, 255, 0.05);
+}
+
+.ticker-item:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: -2px;
 }
 
 .ticker-symbol {
@@ -1443,6 +1456,11 @@
   color: #ffffff;
 }
 
+.pct-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .order-summary-box {
   background: #090d15;
   border: 1px solid var(--border-color);
@@ -1475,6 +1493,18 @@
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.btn-execute-order:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+.order-validation-message {
+  margin: -8px 0 12px;
+  color: var(--accent-red);
+  font-size: 11px;
 }
 
 .btn-execute-order.btn-buy {
