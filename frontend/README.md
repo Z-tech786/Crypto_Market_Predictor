@@ -8,7 +8,13 @@ From this directory, build and start the production frontend:
 docker compose up --build
 ```
 
-Open [http://localhost:8081](http://localhost:8081). Stop the container with `Ctrl+C`, or run `docker compose down` in another terminal.
+To run it in the background instead:
+
+```sh
+docker compose up --build -d
+```
+
+Open [http://localhost:8081](http://localhost:8081). View background container logs with `docker compose logs -f frontend`, and stop the container with `docker compose down`.
 
 The image builds the Vite app and serves its production files with Nginx. Client-side routes fall back to `index.html`.
 
