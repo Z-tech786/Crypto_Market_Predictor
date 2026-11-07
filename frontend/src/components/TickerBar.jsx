@@ -4,12 +4,31 @@ import { formatUSD, formatPercent } from '../utils/formatters';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 export const TickerBar = () => {
-  const { cryptos, setActiveCoinId } = useCrypto();
+  const { cryptos, setActiveCoinId, marketDataStatus } = useCrypto();
+  const statusLabel = {
+    connecting: 'CONNECTING',
+    live: 'LIVE · BINANCE',
+    offline: 'OFFLINE · RETRYING'
+  }[marketDataStatus.status];
+  const lastSynced = marketDataStatus.lastUpdated
+    ? `Last successful sync: ${new Date(marketDataStatus.lastUpdated).toLocaleTimeString()}. `
+    : '';
+  const statusTitle =
+    lastSynced +
+    (marketDataStatus.error ||
+      (marketDataStatus.status === 'live'
+        ? 'Prices are syncing from Binance.'
+        : 'Connecting to Binance live market data.'));
 
   return (
     <div className="ticker-bar-wrapper">
-      <div className="ticker-label">
-        <span className="live-indicator"></span> LIVE FEEDS
+      <div
+        className={`ticker-label ticker-label-${marketDataStatus.status}`}
+        title={statusTitle}
+        aria-live="polite"
+      >
+        <span className={`live-indicator live-indicator-${marketDataStatus.status}`}></span>
+        {statusLabel}
       </div>
       <div className="ticker-track">
         <div className="ticker-content">

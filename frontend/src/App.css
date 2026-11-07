@@ -57,6 +57,17 @@
   animation: pulse 1.5s infinite;
 }
 
+.live-indicator-connecting {
+  background-color: var(--accent-cyan);
+  box-shadow: 0 0 8px var(--accent-cyan);
+}
+
+.live-indicator-offline {
+  background-color: #f43f5e;
+  box-shadow: 0 0 8px #f43f5e;
+  animation: none;
+}
+
 .ticker-track {
   overflow: hidden;
   white-space: nowrap;
