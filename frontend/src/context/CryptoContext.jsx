@@ -19,6 +19,11 @@ export const CryptoProvider = ({ children }) => {
     const saved = localStorage.getItem('crypto_market_data');
     return saved ? JSON.parse(saved) : INITIAL_CRYPTO_LIST;
   });
+  const [marketDataStatus, setMarketDataStatus] = useState({
+    status: 'connecting',
+    lastUpdated: null,
+    error: null
+  });
 
   const [activeCoinId, setActiveCoinId] = useState('bitcoin');
   const [watchlist, setWatchlist] = useState(() => {
@@ -101,28 +106,91 @@ export const CryptoProvider = ({ children }) => {
     localStorage.setItem('crypto_quiz_results', JSON.stringify(quizResults));
   }, [quizResults]);
 
-  // Periodic simulated live price ticks (every 4 seconds)
+  // Sync live spot prices and 24-hour changes from Binance every 30 seconds.
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCryptos((prevCryptos) =>
-        prevCryptos.map((coin) => {
-          // Subtle realistic fluctuation between -0.3% and +0.3%
-          const deltaFactor = 1 + (Math.random() * 0.006 - 0.003);
-          const newPrice = Math.round(coin.price * deltaFactor * 1000) / 1000;
-          const priceDiff = newPrice - coin.price;
-          const newChange24h = Math.round((coin.change24h + priceDiff * 0.02) * 100) / 100;
-          
-          return {
-            ...coin,
-            price: newPrice,
-            change24h: newChange24h,
-            lastTickDirection: priceDiff >= 0 ? 'up' : 'down'
-          };
-        })
-      );
-    }, 4000);
+    let controller;
+    const syncPrices = async () => {
+      controller?.abort();
+      const requestController = new AbortController();
+      controller = requestController;
 
-    return () => clearInterval(interval);
+      try {
+        const symbols = INITIAL_CRYPTO_LIST.map((coin) => `${coin.symbol}USDT`);
+        const query = new URLSearchParams({ symbols: JSON.stringify(symbols) });
+        const response = await fetch(
+          `https://api.binance.com/api/v3/ticker/24hr?${query}`,
+          { signal: requestController.signal, cache: 'no-store' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Binance returned HTTP ${response.status}`);
+        }
+
+        const tickers = await response.json();
+        if (!Array.isArray(tickers)) {
+          throw new Error('Binance returned an invalid ticker response');
+        }
+
+        const liveData = new Map(
+          tickers
+            .map((ticker) => [
+              ticker.symbol,
+              {
+                price: Number(ticker.lastPrice),
+                change24h: Number(ticker.priceChangePercent),
+                volume24h: Number(ticker.quoteVolume)
+              }
+            ])
+            .filter(
+              ([symbol, data]) =>
+                symbol &&
+                Number.isFinite(data.price) &&
+                data.price > 0 &&
+                Number.isFinite(data.change24h) &&
+                Number.isFinite(data.volume24h)
+            )
+        );
+
+        if (symbols.some((symbol) => !liveData.has(symbol))) {
+          throw new Error('Binance did not return valid prices for every listed coin');
+        }
+
+        setCryptos((previous) =>
+          previous.map((coin) => {
+            const liveCoin = liveData.get(`${coin.symbol}USDT`);
+            if (!liveCoin) return coin;
+
+            return {
+              ...coin,
+              ...liveCoin,
+              lastTickDirection: liveCoin.price >= coin.price ? 'up' : 'down'
+            };
+          })
+        );
+        setMarketDataStatus({
+          status: 'live',
+          lastUpdated: Date.now(),
+          error: null
+        });
+      } catch (error) {
+        if (requestController.signal.aborted) return;
+
+        console.error('Unable to sync live cryptocurrency prices:', error);
+        setMarketDataStatus((previous) => ({
+          ...previous,
+          status: 'offline',
+          error: error.message
+        }));
+      }
+    };
+
+    syncPrices();
+    const interval = setInterval(syncPrices, 30000);
+
+    return () => {
+      clearInterval(interval);
+      controller?.abort();
+    };
   }, []);
 
   // Bot execution simulation tick
@@ -338,6 +406,7 @@ export const CryptoProvider = ({ children }) => {
     <CryptoContext.Provider
       value={{
         cryptos,
+        marketDataStatus,
         globalMetrics: GLOBAL_METRICS,
         activeCoin,
         setActiveCoinId,

@@ -57,6 +57,17 @@
   animation: pulse 1.5s infinite;
 }
 
+.live-indicator-connecting {
+  background-color: var(--accent-cyan);
+  box-shadow: 0 0 8px var(--accent-cyan);
+}
+
+.live-indicator-offline {
+  background-color: #f43f5e;
+  box-shadow: 0 0 8px #f43f5e;
+  animation: none;
+}
+
 .ticker-track {
   overflow: hidden;
   white-space: nowrap;
@@ -73,18 +84,31 @@
   animation-play-state: paused;
 }
 
+.ticker-content:focus-within {
+  animation-play-state: paused;
+}
+
 .ticker-item {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  cursor: pointer;
   padding: 4px 8px;
+  border: 0;
   border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
   transition: background 0.2s;
 }
 
 .ticker-item:hover {
   background: rgba(255, 255, 255, 0.05);
+}
+
+.ticker-item:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: -2px;
 }
 
 .ticker-symbol {
@@ -1391,6 +1415,24 @@
   font-weight: 600;
 }
 
+.password-input {
+  padding-right: 42px;
+}
+
+.password-visibility-toggle {
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.password-visibility-toggle:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
 .percent-chips-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1412,6 +1454,11 @@
 .pct-chip:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
+}
+
+.pct-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .order-summary-box {
@@ -1446,6 +1493,18 @@
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.btn-execute-order:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+.order-validation-message {
+  margin: -8px 0 12px;
+  color: var(--accent-red);
+  font-size: 11px;
 }
 
 .btn-execute-order.btn-buy {
@@ -1878,7 +1937,33 @@
   font-size: 11px;
   color: var(--text-muted);
   line-height: 1.4;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+}
+
+.module-progress {
+  margin-bottom: 12px;
+}
+
+.module-progress-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.module-progress-track {
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.module-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+  transition: width 0.3s ease;
 }
 
 .module-item-footer {
@@ -2753,6 +2838,7 @@
 
 .admin-tabs-nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -2775,6 +2861,11 @@
   border-color: var(--accent-cyan);
   color: var(--accent-cyan);
   background: rgba(6, 182, 212, 0.1);
+}
+
+.admin-subtab:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
 }
 
 .admin-section-panel {
@@ -2815,6 +2906,90 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.admin-market-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.admin-market-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: #090d15;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.admin-market-stat strong {
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 20px;
+}
+
+.admin-market-stat strong.positive {
+  color: var(--accent-green);
+}
+
+.admin-market-stat strong.negative {
+  color: var(--accent-red);
+}
+
+.admin-market-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-market-status .status-dot {
+  background: var(--accent-cyan);
+  box-shadow: 0 0 8px var(--accent-cyan);
+}
+
+.admin-market-status.live {
+  color: var(--accent-green);
+}
+
+.admin-market-status.live .status-dot {
+  background: var(--accent-green);
+  box-shadow: 0 0 8px var(--accent-green);
+}
+
+.admin-market-status.offline {
+  color: var(--accent-red);
+}
+
+.admin-market-status.offline .status-dot {
+  background: var(--accent-red);
+  box-shadow: 0 0 8px var(--accent-red);
+}
+
+.admin-market-asset {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-market-asset-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+}
+
+.admin-market-change {
+  white-space: nowrap;
+}
+
+.admin-market-change svg {
+  margin-right: 4px;
+  vertical-align: -2px;
 }
 
 .avatar-mini {

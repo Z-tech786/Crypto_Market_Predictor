@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { EDUCATION_MODULES } from '../data/educationData';
 import { formatUSD } from '../utils/formatters';
@@ -9,18 +9,12 @@ import {
   Server,
   Activity,
   Plus,
-  Trash2,
-  Edit2,
-  CheckCircle,
-  AlertCircle,
-  RefreshCw,
-  Zap,
   TrendingUp,
   TrendingDown
 } from 'lucide-react';
 
 export const AdminPanel = () => {
-  const { user, addToast, cryptos } = useCrypto();
+  const { user, addToast, cryptos, marketDataStatus } = useCrypto();
 
   const [activeAdminTab, setActiveAdminTab] = useState('users'); // 'users' | 'content' | 'diagnostics' | 'market'
 
@@ -86,6 +80,14 @@ export const AdminPanel = () => {
   const [newLessonContent, setNewLessonContent] = useState('');
   const [selectedModuleId, setSelectedModuleId] = useState(modules[0]?.id || '');
   const [isAddLessonModal, setIsAddLessonModal] = useState(false);
+  const marketMovers = [...cryptos].sort((a, b) => b.change24h - a.change24h);
+  const marketGainers = cryptos.filter((coin) => coin.change24h >= 0).length;
+  const marketLosers = cryptos.length - marketGainers;
+  const marketStatusLabel = {
+    connecting: 'Connecting',
+    live: 'Live',
+    offline: 'Offline · retrying'
+  }[marketDataStatus.status];
 
   // User Actions
   const handleToggleUserStatus = (userId) => {
@@ -166,10 +168,12 @@ export const AdminPanel = () => {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="admin-heading">System Administration & Content Hub</h2>
-              <span className="admin-badge">Admin Access</span>
+              <span className="admin-badge" title={`Signed in as ${user.email}`}>
+                Admin Access
+              </span>
             </div>
             <p className="admin-sub">
-              Manage student & trader accounts, curriculum lessons, quizzes, and live AI model telemetry.
+              Signed in as {user.name} · Manage accounts, curriculum, and market data.
             </p>
           </div>
         </div>
@@ -177,18 +181,28 @@ export const AdminPanel = () => {
         <div className="admin-tabs-nav">
           <button
             className={`admin-subtab ${activeAdminTab === 'users' ? 'active' : ''}`}
+            aria-pressed={activeAdminTab === 'users'}
             onClick={() => setActiveAdminTab('users')}
           >
             <Users size={15} /> Users ({usersList.length})
           </button>
           <button
             className={`admin-subtab ${activeAdminTab === 'content' ? 'active' : ''}`}
+            aria-pressed={activeAdminTab === 'content'}
             onClick={() => setActiveAdminTab('content')}
           >
             <BookOpen size={15} /> Educational Content
           </button>
           <button
+            className={`admin-subtab ${activeAdminTab === 'market' ? 'active' : ''}`}
+            aria-pressed={activeAdminTab === 'market'}
+            onClick={() => setActiveAdminTab('market')}
+          >
+            <Activity size={15} /> Market Overview
+          </button>
+          <button
             className={`admin-subtab ${activeAdminTab === 'diagnostics' ? 'active' : ''}`}
+            aria-pressed={activeAdminTab === 'diagnostics'}
             onClick={() => setActiveAdminTab('diagnostics')}
           >
             <Server size={15} /> System Diagnostics
@@ -280,7 +294,97 @@ export const AdminPanel = () => {
         </div>
       )}
 
-      {/* 3. TAB: Educational Content Management */}
+      {/* 3. TAB: Live Market Overview */}
+      {activeAdminTab === 'market' && (
+        <div className="admin-section-panel">
+          <div className="section-head-bar">
+            <div>
+              <h3 className="section-title">Live Cryptocurrency Market</h3>
+              <p className="text-xs text-muted">
+                Prices and 24-hour performance for tracked assets
+              </p>
+            </div>
+            <div
+              className={`admin-market-status ${marketDataStatus.status}`}
+              role="status"
+              title={
+                marketDataStatus.lastUpdated
+                  ? `Last successful sync: ${new Date(marketDataStatus.lastUpdated).toLocaleString()}`
+                  : marketDataStatus.error || 'Waiting for the first market data sync'
+              }
+            >
+              <span className="status-dot"></span>
+              {marketStatusLabel}
+            </div>
+          </div>
+
+          <div className="admin-market-summary">
+            <div className="admin-market-stat">
+              <span className="text-xs text-muted">Tracked assets</span>
+              <strong>{cryptos.length}</strong>
+            </div>
+            <div className="admin-market-stat">
+              <span className="text-xs text-muted">Positive in 24h</span>
+              <strong className="positive">{marketGainers}</strong>
+            </div>
+            <div className="admin-market-stat">
+              <span className="text-xs text-muted">Negative in 24h</span>
+              <strong className="negative">{marketLosers}</strong>
+            </div>
+          </div>
+
+          <div className="admin-table-container">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Asset</th>
+                  <th className="text-right">Price (USDT)</th>
+                  <th className="text-right">24h Change</th>
+                  <th className="text-right">24h Volume</th>
+                </tr>
+              </thead>
+              <tbody>
+                {marketMovers.length > 0 ? (
+                  marketMovers.map((coin) => {
+                    const isPositive = coin.change24h >= 0;
+                    const TrendIcon = isPositive ? TrendingUp : TrendingDown;
+
+                    return (
+                      <tr key={coin.id}>
+                        <td>
+                          <div className="admin-market-asset">
+                            <span
+                              className="admin-market-asset-dot"
+                              style={{ backgroundColor: coin.color }}
+                              aria-hidden="true"
+                            />
+                            <span className="font-semibold text-white">{coin.name}</span>
+                            <span className="text-xs text-muted">{coin.symbol}</span>
+                          </div>
+                        </td>
+                        <td className="text-right font-mono">{formatUSD(coin.price)}</td>
+                        <td className={`text-right admin-market-change ${isPositive ? 'positive' : 'negative'}`}>
+                          <TrendIcon size={14} aria-hidden="true" />
+                          {coin.change24h > 0 ? '+' : ''}{coin.change24h.toFixed(2)}%
+                        </td>
+                        <td className="text-right font-mono">{formatUSD(coin.volume24h)}</td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="no-data-cell">
+                      No market assets are available.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 4. TAB: Educational Content Management */}
       {activeAdminTab === 'content' && (
         <div className="admin-section-panel">
           <div className="section-head-bar">
@@ -343,7 +447,7 @@ export const AdminPanel = () => {
         </div>
       )}
 
-      {/* 4. TAB: System Diagnostics */}
+      {/* 5. TAB: System Diagnostics */}
       {activeAdminTab === 'diagnostics' && (
         <div className="admin-section-panel">
           <div className="section-head-bar">
@@ -409,7 +513,7 @@ export const AdminPanel = () => {
         </div>
       )}
 
-      {/* 5. Add Lesson Modal */}
+      {/* 6. Add Lesson Modal */}
       {isAddLessonModal && (
         <div className="modal-backdrop" onClick={() => setIsAddLessonModal(false)}>
           <div className="custom-modal-card" onClick={(e) => e.stopPropagation()}>

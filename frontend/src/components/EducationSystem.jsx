@@ -168,8 +168,11 @@ export const EducationSystem = () => {
             {filteredModules.map((module) => {
               const isSelected = activeModule.id === module.id;
               const quizRecord = quizResults[module.quiz.id];
-              const isModuleCompleted = module.lessons.every((l) =>
-                completedLessons.includes(l.id)
+              const completedModuleLessons = module.lessons.filter((lesson) =>
+                completedLessons.includes(lesson.id)
+              );
+              const moduleProgress = Math.round(
+                (completedModuleLessons.length / module.lessons.length) * 100
               );
 
               return (
@@ -193,6 +196,26 @@ export const EducationSystem = () => {
 
                   <h4 className="module-item-title">{module.title}</h4>
                   <p className="module-item-desc">{module.description}</p>
+
+                  <div className="module-progress">
+                    <div className="module-progress-label">
+                      <span>Lesson progress</span>
+                      <span>{completedModuleLessons.length}/{module.lessons.length}</span>
+                    </div>
+                    <div
+                      className="module-progress-track"
+                      role="progressbar"
+                      aria-label={`${module.title} lesson progress`}
+                      aria-valuemin={0}
+                      aria-valuemax={module.lessons.length}
+                      aria-valuenow={completedModuleLessons.length}
+                    >
+                      <div
+                        className="module-progress-fill"
+                        style={{ width: `${moduleProgress}%` }}
+                      />
+                    </div>
+                  </div>
 
                   <div className="module-item-footer">
                     <span className="lessons-count text-xs text-muted">

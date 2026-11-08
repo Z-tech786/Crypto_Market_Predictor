@@ -32,7 +32,18 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAssistant, onOpenAuth })
     <header className="navbar-container">
       <div className="navbar-top">
         {/* Brand */}
-        <div className="navbar-brand" onClick={() => setActiveTab('dashboard')}>
+        <div
+          className="navbar-brand"
+          role="button"
+          tabIndex={0}
+          onClick={() => setActiveTab('dashboard')}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              setActiveTab('dashboard');
+            }
+          }}
+        >
           <div className="brand-logo-icon">
             <BrainCircuit size={26} className="text-cyan-400" />
             <Sparkles size={14} className="brand-sparkle" />

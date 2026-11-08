@@ -1,16 +1,28 @@
-# React + Vite
+# Crypto Market Predictor frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Run with Docker
 
-Currently, two official plugins are available:
+From this directory, build and start the production frontend:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```sh
+docker compose up --build
+```
 
-## React Compiler
+To run it in the background instead:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```sh
+docker compose up --build -d
+```
 
-## Expanding the ESLint configuration
+Open [http://localhost:8081](http://localhost:8081). View background container logs with `docker compose logs -f frontend`, and stop the container with `docker compose down`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+The image builds the Vite app and serves its production files with Nginx. Client-side routes fall back to `index.html`.
+
+## Run locally
+
+```sh
+npm ci
+npm run dev
+```
+
+The development server URL is printed by Vite.
