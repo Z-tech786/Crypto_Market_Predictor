@@ -31,21 +31,21 @@ export const EducationSystem = () => {
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizScore, setQuizScore] = useState(0);
 
-  const levels = ['All', 'Beginner', 'Intermediate', 'Advanced'];
+  const levels = ["All", "Beginner", "Intermediate", "Advanced"];
 
-  const filteredModules = EDUCATION_MODULES.filter((m) =>
-    selectedLevel === 'All' ? true : m.level.toLowerCase() === selectedLevel.toLowerCase()
+  const filteredModules = EDUCATION_MODULES.filter((mod) =>
+    (selectedLevel === 'All' ? true : mod.level.toLowerCase() === selectedLevel.toLowerCase())
   );
 
   // Overall Stats
-  const totalLessons = EDUCATION_MODULES.reduce((acc, m) => acc + m.lessons.length, 0);
-  const progressPercent = Math.min(100, Math.round((completedLessons.length / totalLessons) * 100));
+  const totalLessons = EDUCATION_MODULES.reduce((acc, mod) => acc + mod.lessons.length, 0);
+  const progressPercent = (Math.min(100, Math.round((completedLessons.length / totalLessons) * 100)));
   const quizzesPassedCount = Object.values(quizResults).filter((r) => r.passed).length;
-  const userXP = completedLessons.length * 50 + quizzesPassedCount * 150;
+  const userXP = (completedLessons.length * 50) + (quizzesPassedCount * 150);
 
   // Open Quiz
-  const handleStartQuiz = (module) => {
-    setQuizModule(module);
+  const handleStartQuiz = (moduleData) => {
+    setQuizModule(moduleData);
     setCurrentQuestionIndex(0);
     setSelectedAnswers({});
     setQuizSubmitted(false);
@@ -55,8 +55,8 @@ export const EducationSystem = () => {
 
   const handleSelectOption = (questionIndex, optionIndex) => {
     if (quizSubmitted) return;
-    setSelectedAnswers((prev) => ({
-      ...prev,
+    setSelectedAnswers((prevState) => ({
+      ...prevState,
       [questionIndex]: optionIndex
     }));
   };
@@ -73,10 +73,10 @@ export const EducationSystem = () => {
     });
 
     const scorePct = Math.round((correctCount / questions.length) * 100);
-    const passed = scorePct >= quizModule.quiz.passingScore;
+    const passed = (scorePct >= quizModule.quiz.passingScore);
 
-    setQuizScore(scorePct);
     setQuizSubmitted(true);
+    setQuizScore(scorePct);
     saveQuizScore(quizModule.quiz.id, scorePct, passed);
 
     if (passed) {
@@ -150,7 +150,7 @@ export const EducationSystem = () => {
           {levels.map((lvl) => (
             <button
               key={lvl}
-              className={`cat-pill ${selectedLevel === lvl ? 'active' : ''}`}
+              className={`cat-pill ${(selectedLevel === lvl ? 'active' : '')}`}
               onClick={() => setSelectedLevel(lvl)}
             >
               {lvl} Modules
@@ -166,29 +166,29 @@ export const EducationSystem = () => {
           <h3 className="sidebar-heading">Learning Pathways</h3>
           <div className="modules-list">
             {filteredModules.map((module) => {
-              const isSelected = activeModule.id === module.id;
+              const isSelected = (activeModule.id === module.id);
               const quizRecord = quizResults[module.quiz.id];
-              const completedModuleLessons = module.lessons.filter((lesson) =>
-                completedLessons.includes(lesson.id)
+              const completedModuleLessons = module.lessons.filter((lessonItem) =>
+                completedLessons.includes(lessonItem.id)
               );
               const moduleProgress = Math.round(
-                (completedModuleLessons.length / module.lessons.length) * 100
+                ((completedModuleLessons.length / module.lessons.length) * 100)
               );
 
               return (
                 <div
                   key={module.id}
-                  className={`module-item-card ${isSelected ? 'active' : ''}`}
+                  className={`module-item-card ${(isSelected ? 'active' : '')}`}
                   onClick={() => {
-                    setActiveModule(module);
                     setActiveLesson(module.lessons[0]);
+                    setActiveModule(module);
                   }}
                 >
                   <div className="module-item-top">
                     <span className={`level-tag level-${module.level.toLowerCase()}`}>
                       {module.level}
                     </span>
-                    <span className="read-time text-xs text-muted">
+                    <span className="read-time text-muted text-xs">
                       <Clock size={12} className="inline mr-1" />
                       {module.readTime}
                     </span>
@@ -218,7 +218,7 @@ export const EducationSystem = () => {
                   </div>
 
                   <div className="module-item-footer">
-                    <span className="lessons-count text-xs text-muted">
+                    <span className="lessons-count text-muted text-xs">
                       <BookOpen size={13} className="inline mr-1" />
                       {module.lessons.length} Lessons
                     </span>
@@ -258,17 +258,17 @@ export const EducationSystem = () => {
 
             {/* Lesson switcher pills */}
             <div className="lesson-nav-tabs">
-              {activeModule.lessons.map((lesson, idx) => {
-                const isCurrent = activeLesson.id === lesson.id;
+              {activeModule.lessons.map((lesson, index) => {
+                const isCurrent = (activeLesson.id === lesson.id);
                 const isDone = completedLessons.includes(lesson.id);
 
                 return (
                   <button
                     key={lesson.id}
-                    className={`lesson-tab ${isCurrent ? 'active' : ''} ${isDone ? 'done' : ''}`}
+                    className={`lesson-tab ${(isCurrent ? 'active' : '')} ${(isDone ? 'done' : '')}`}
                     onClick={() => setActiveLesson(lesson)}
                   >
-                    <span>Part {idx + 1}: {lesson.title}</span>
+                    <span>Part {index + 1}: {lesson.title}</span>
                     {isDone && <CheckCircle size={13} className="text-emerald-400 ml-1 inline" />}
                   </button>
                 );
@@ -277,8 +277,8 @@ export const EducationSystem = () => {
           </div>
 
           <div className="lesson-body-content">
-            {activeLesson.content.split('\n\n').map((paragraph, idx) => (
-              <p key={idx} className="lesson-paragraph">
+            {activeLesson.content.split('\n\n').map((paragraph, index) => (
+              <p key={index} className="lesson-paragraph">
                 {paragraph}
               </p>
             ))}
@@ -296,7 +296,7 @@ export const EducationSystem = () => {
           {/* Lesson Footer Actions */}
           <div className="lesson-reader-footer">
             <button
-              className={`btn-complete-lesson ${completedLessons.includes(activeLesson.id) ? 'completed' : ''}`}
+              className={`btn-complete-lesson ${(completedLessons.includes(activeLesson.id) ? 'completed' : '')}`}
               onClick={() => markLessonComplete(activeLesson.id)}
             >
               <CheckCircle size={16} />
@@ -341,7 +341,7 @@ export const EducationSystem = () => {
               {!quizSubmitted ? (
                 <div className="quiz-in-progress">
                   <div className="quiz-progress-text">
-                    Question {currentQuestionIndex + 1} of {quizModule.quiz.questions.length}
+                    Question {currentQuestionIndex + 1} of {(quizModule.quiz.questions).length}
                   </div>
 
                   {(() => {
@@ -355,7 +355,7 @@ export const EducationSystem = () => {
                           {q.options.map((opt, optIdx) => (
                             <button
                               key={optIdx}
-                              className={`quiz-option-btn ${selectedOpt === optIdx ? 'selected' : ''}`}
+                              className={`quiz-option-btn ${(selectedOpt === optIdx ? 'selected' : '')}`}
                               onClick={() => handleSelectOption(currentQuestionIndex, optIdx)}
                             >
                               <span className="opt-marker">
@@ -372,13 +372,13 @@ export const EducationSystem = () => {
                   <div className="quiz-nav-row">
                     <button
                       className="btn-quiz-prev"
-                      disabled={currentQuestionIndex === 0}
+                      disabled={(currentQuestionIndex === 0)}
                       onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
                     >
                       Previous
                     </button>
 
-                    {currentQuestionIndex < quizModule.quiz.questions.length - 1 ? (
+                    {currentQuestionIndex < (quizModule.quiz.questions).length - 1 ? (
                       <button
                         className="btn-quiz-next"
                         onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
@@ -390,8 +390,8 @@ export const EducationSystem = () => {
                         className="btn-quiz-submit"
                         onClick={handleSubmitQuiz}
                         disabled={
-                          Object.keys(selectedAnswers).length <
-                          quizModule.quiz.questions.length
+                          (Object.keys(selectedAnswers).length) <
+                          (quizModule.quiz.questions).length
                         }
                       >
                         Submit Quiz
@@ -402,15 +402,15 @@ export const EducationSystem = () => {
               ) : (
                 /* Quiz Result Score View */
                 <div className="quiz-result-view">
-                  <div className={`quiz-score-circle ${quizScore >= quizModule.quiz.passingScore ? 'passed' : 'failed'}`}>
+                  <div className={`quiz-score-circle ${(quizScore >= quizModule.quiz.passingScore ? 'passed' : 'failed')}`}>
                     <span className="score-val">{quizScore}%</span>
                     <span className="score-label">
-                      {quizScore >= quizModule.quiz.passingScore ? 'PASSED' : 'RETRY'}
+                      {(quizScore >= quizModule.quiz.passingScore ? 'PASSED' : 'RETRY')}
                     </span>
                   </div>
 
                   <h3 className="result-headline">
-                    {quizScore >= quizModule.quiz.passingScore
+                    {(quizScore >= quizModule.quiz.passingScore)
                       ? '🎉 Outstanding! Module Mastery Confirmed!'
                       : 'Keep Practicing! Review the Lessons and Try Again.'}
                   </h3>
@@ -418,18 +418,18 @@ export const EducationSystem = () => {
                   <div className="question-explanations-list">
                     {quizModule.quiz.questions.map((q, qIdx) => {
                       const userChoice = selectedAnswers[qIdx];
-                      const isCorrect = userChoice === q.correctIndex;
+                      const isCorrect = (userChoice === q.correctIndex);
 
                       return (
                         <div
                           key={qIdx}
-                          className={`explanation-item ${isCorrect ? 'correct' : 'incorrect'}`}
+                          className={`explanation-item ${(isCorrect ? 'correct' : 'incorrect')}`}
                         >
                           <div className="exp-top">
                             <span className="font-semibold text-sm">
                               Q{qIdx + 1}: {q.question}
                             </span>
-                            <span className={`exp-status ${isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            <span className={`exp-status ${(isCorrect ? 'text-emerald-400' : 'text-rose-400')}`}>
                               {isCorrect ? '✓ Correct (+50 XP)' : '✗ Incorrect'}
                             </span>
                           </div>
