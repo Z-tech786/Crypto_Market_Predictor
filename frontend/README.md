@@ -8,8 +8,6 @@ From this directory, build and start the production frontend:
 docker compose up --build
 ```
 
-To run it in the background instead:
-
 ```sh
 docker compose up --build -d
 ```
