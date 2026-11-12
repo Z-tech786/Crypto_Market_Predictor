@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { INITIAL_CRYPTO_LIST, GLOBAL_METRICS } from '../data/cryptoData';
 import { BOT_STRATEGIES, INITIAL_PAPER_WALLET } from '../data/botStrategies';
-import { EDUCATION_MODULES } from '../data/educationData';
+import { apiRequest } from '../utils/api';
 
 const CryptoContext = createContext();
 
@@ -33,19 +33,21 @@ export const CryptoProvider = ({ children }) => {
 
   // 2. User & Auth State
   const [user, setUser] = useState(() => {
+    const savedToken = localStorage.getItem('crypto_auth_token');
     const saved = localStorage.getItem('crypto_user');
-    return saved
+    return savedToken && saved
       ? JSON.parse(saved)
       : {
-          name: 'Farhan Ijaz',
-          email: 'farhan@crypto.edu',
-          role: 'admin', // 'student' | 'trader' | 'admin'
+          name: 'Guest User',
+          email: '',
+          role: 'student',
           riskTolerance: 'Moderate',
-          studentId: '23L-0568',
-          isAuthenticated: true,
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces'
+          studentId: '',
+          isAuthenticated: false
         };
   });
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem('crypto_auth_token'));
+  const [accountDataLoaded, setAccountDataLoaded] = useState(false);
 
   // 3. Paper Trading Virtual Wallet
   const [wallet, setWallet] = useState(() => {
@@ -73,13 +75,13 @@ export const CryptoProvider = ({ children }) => {
   // 6. Toasts
   const [toasts, setToasts] = useState([]);
 
-  const addToast = (message, type = 'info') => {
+  const addToast = useCallback((message, type = 'info') => {
     const id = Date.now() + Math.random();
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4500);
-  };
+  }, []);
 
   // Sync to localStorage
   useEffect(() => {
@@ -89,6 +91,14 @@ export const CryptoProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('crypto_user', JSON.stringify(user));
   }, [user]);
+
+  useEffect(() => {
+    if (authToken) {
+      localStorage.setItem('crypto_auth_token', authToken);
+    } else {
+      localStorage.removeItem('crypto_auth_token');
+    }
+  }, [authToken, addToast]);
 
   useEffect(() => {
     localStorage.setItem('crypto_paper_wallet', JSON.stringify(wallet));
@@ -105,6 +115,81 @@ export const CryptoProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('crypto_quiz_results', JSON.stringify(quizResults));
   }, [quizResults]);
+
+  useEffect(() => {
+    if (!authToken) {
+      setAccountDataLoaded(true);
+      return;
+    }
+
+    let active = true;
+    setAccountDataLoaded(false);
+    Promise.all([
+      apiRequest('/auth/me', { token: authToken }),
+      apiRequest('/portfolio', { token: authToken }),
+      apiRequest('/watchlist', { token: authToken }),
+      apiRequest('/progress', { token: authToken })
+    ])
+      .then(([account, savedWallet, savedWatchlist, progress]) => {
+        if (!active) return;
+        setUser(account.user);
+        setWallet(savedWallet);
+        setBots((current) =>
+          current.map((bot) => ({
+            ...bot,
+            active: savedWallet.bots?.find((savedBot) => savedBot.id === bot.id)?.active ?? false
+          }))
+        );
+        setWatchlist(savedWatchlist.watchlist);
+        setCompletedLessons(progress.completedLessons);
+        setQuizResults(progress.quizResults);
+      })
+      .catch((error) => {
+        if (!active) return;
+        console.error('Unable to load account data:', error);
+        setAuthToken(null);
+        setUser({
+          name: 'Guest User',
+          email: '',
+          studentId: '',
+          role: 'student',
+          riskTolerance: 'Moderate',
+          isAuthenticated: false
+        });
+        addToast(error.message, 'error');
+      })
+      .finally(() => {
+        if (active) setAccountDataLoaded(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [authToken, addToast]);
+
+  useEffect(() => {
+    if (!authToken || !accountDataLoaded) return;
+    apiRequest('/watchlist', {
+      method: 'PUT',
+      token: authToken,
+      body: { watchlist }
+    }).catch((error) => {
+      console.error('Unable to save watchlist:', error);
+      addToast(error.message, 'error');
+    });
+  }, [watchlist, authToken, accountDataLoaded, addToast]);
+
+  useEffect(() => {
+    if (!authToken || !accountDataLoaded) return;
+    apiRequest('/progress', {
+      method: 'PUT',
+      token: authToken,
+      body: { completedLessons, quizResults }
+    }).catch((error) => {
+      console.error('Unable to save learning progress:', error);
+      addToast(error.message, 'error');
+    });
+  }, [completedLessons, quizResults, authToken, accountDataLoaded, addToast]);
 
   // Sync live spot prices and 24-hour changes from Binance every 30 seconds.
   useEffect(() => {
@@ -193,42 +278,6 @@ export const CryptoProvider = ({ children }) => {
     };
   }, []);
 
-  // Bot execution simulation tick
-  useEffect(() => {
-    const activeBots = bots.filter((b) => b.active);
-    if (activeBots.length === 0) return;
-
-    const botInterval = setInterval(() => {
-      activeBots.forEach((bot) => {
-        // Find targeted coin
-        const pairSymbol = bot.targetPair.split('/')[0];
-        const coin = cryptos.find((c) => c.symbol === pairSymbol);
-        if (!coin) return;
-
-        // Simulate execution chance
-        const willExecute = Math.random() < 0.25; // 25% chance per interval
-        if (willExecute) {
-          const isBuy = Math.random() > 0.45;
-          const tradeAmount = Math.max(0.01, Math.round((500 / coin.price) * 100) / 100);
-          const totalCost = tradeAmount * coin.price;
-
-          if (isBuy && wallet.usdtBalance >= totalCost) {
-            executeTrade('BUY', coin.id, tradeAmount, coin.price, 'MARKET', bot.name);
-            addToast(`🤖 ${bot.name} executed BUY order for ${tradeAmount} ${coin.symbol}`, 'success');
-          } else if (!isBuy) {
-            const holding = wallet.holdings.find((h) => h.coinId === coin.id);
-            if (holding && holding.amount >= tradeAmount) {
-              executeTrade('SELL', coin.id, tradeAmount, coin.price, 'MARKET', bot.name);
-              addToast(`🤖 ${bot.name} executed SELL order for ${tradeAmount} ${coin.symbol}`, 'info');
-            }
-          }
-        }
-      });
-    }, 12000);
-
-    return () => clearInterval(botInterval);
-  }, [bots, cryptos, wallet]);
-
   // Watchlist toggle
   const toggleWatchlist = (coinId) => {
     setWatchlist((prev) => {
@@ -243,7 +292,7 @@ export const CryptoProvider = ({ children }) => {
   };
 
   // Trade Execution
-  const executeTrade = (type, coinId, amount, price, orderType = 'MARKET', strategy = 'Manual') => {
+  const executeTrade = useCallback((type, coinId, amount, price, orderType = 'MARKET', strategy = 'Manual') => {
     const numAmount = Number(amount);
     const numPrice = Number(price);
     const totalCost = numAmount * numPrice;
@@ -305,6 +354,22 @@ export const CryptoProvider = ({ children }) => {
         };
       });
 
+      if (authToken) {
+        apiRequest('/portfolio/trades', {
+          method: 'POST',
+          token: authToken,
+          body: { type, coinId, symbol: coin.symbol, amount: numAmount, price: numPrice, orderType, strategy }
+        })
+          .then(setWallet)
+          .catch((error) => {
+            console.error('Unable to save paper trade:', error);
+            addToast(error.message, 'error');
+            apiRequest('/portfolio', { token: authToken }).then(setWallet).catch((refreshError) => {
+              console.error('Unable to refresh paper wallet:', refreshError);
+            });
+          });
+      }
+
       addToast(`Successfully bought ${numAmount} ${coin.symbol} at $${numPrice.toLocaleString()}!`, 'success');
       return true;
     } else if (type === 'SELL') {
@@ -346,10 +411,60 @@ export const CryptoProvider = ({ children }) => {
         };
       });
 
+      if (authToken) {
+        apiRequest('/portfolio/trades', {
+          method: 'POST',
+          token: authToken,
+          body: { type, coinId, symbol: coin.symbol, amount: numAmount, price: numPrice, orderType, strategy }
+        })
+          .then(setWallet)
+          .catch((error) => {
+            console.error('Unable to save paper trade:', error);
+            addToast(error.message, 'error');
+            apiRequest('/portfolio', { token: authToken }).then(setWallet).catch((refreshError) => {
+              console.error('Unable to refresh paper wallet:', refreshError);
+            });
+          });
+      }
+
       addToast(`Successfully sold ${numAmount} ${coin.symbol} for $${totalCost.toLocaleString()}!`, 'success');
       return true;
     }
-  };
+  }, [authToken, cryptos, wallet, addToast]);
+
+  // Bot execution simulation tick
+  useEffect(() => {
+    const activeBots = bots.filter((b) => b.active);
+    if (activeBots.length === 0) return;
+
+    const botInterval = setInterval(() => {
+      activeBots.forEach((bot) => {
+        const pairSymbol = bot.targetPair.split('/')[0];
+        const coin = cryptos.find((c) => c.symbol === pairSymbol);
+        if (!coin) return;
+
+        const willExecute = Math.random() < 0.25;
+        if (willExecute) {
+          const isBuy = Math.random() > 0.45;
+          const tradeAmount = Math.max(0.01, Math.round((500 / coin.price) * 100) / 100);
+          const totalCost = tradeAmount * coin.price;
+
+          if (isBuy && wallet.usdtBalance >= totalCost) {
+            executeTrade('BUY', coin.id, tradeAmount, coin.price, 'MARKET', bot.name);
+            addToast(`🤖 ${bot.name} executed BUY order for ${tradeAmount} ${coin.symbol}`, 'success');
+          } else if (!isBuy) {
+            const holding = wallet.holdings.find((h) => h.coinId === coin.id);
+            if (holding && holding.amount >= tradeAmount) {
+              executeTrade('SELL', coin.id, tradeAmount, coin.price, 'MARKET', bot.name);
+              addToast(`🤖 ${bot.name} executed SELL order for ${tradeAmount} ${coin.symbol}`, 'info');
+            }
+          }
+        }
+      });
+    }, 12000);
+
+    return () => clearInterval(botInterval);
+  }, [bots, cryptos, wallet, executeTrade, addToast]);
 
   const resetWallet = () => {
     setWallet({
@@ -357,22 +472,37 @@ export const CryptoProvider = ({ children }) => {
       holdings: [],
       tradeHistory: []
     });
+    if (authToken) {
+      apiRequest('/portfolio/reset', { method: 'POST', token: authToken })
+        .then(setWallet)
+        .catch((error) => {
+          console.error('Unable to reset paper wallet:', error);
+          addToast(error.message, 'error');
+        });
+    }
     addToast('Virtual wallet reset to $10,000.00 USDT initial balance.', 'info');
   };
 
   const toggleBot = (botId) => {
-    setBots((prev) =>
-      prev.map((b) => {
-        if (b.id === botId) {
-          const nextState = !b.active;
-          addToast(
-            `${b.name} is now ${nextState ? 'ACTIVE ⚡' : 'PAUSED ⏸️'}`,
-            nextState ? 'success' : 'info'
-          );
-          return { ...b, active: nextState };
-        }
-        return b;
-      })
+    const bot = bots.find((item) => item.id === botId);
+    if (!bot) return;
+    const nextState = !bot.active;
+    setBots((previous) =>
+      previous.map((item) => item.id === botId ? { ...item, active: nextState } : item)
+    );
+    if (authToken) {
+      apiRequest(`/portfolio/bots/${botId}`, {
+        method: 'PATCH',
+        token: authToken,
+        body: { active: nextState }
+      }).catch((error) => {
+        console.error('Unable to save bot state:', error);
+        addToast(error.message, 'error');
+      });
+    }
+    addToast(
+      `${bot.name} is now ${nextState ? 'ACTIVE ⚡' : 'PAUSED ⏸️'}`,
+      nextState ? 'success' : 'info'
     );
   };
 
@@ -399,6 +529,48 @@ export const CryptoProvider = ({ children }) => {
     addToast(`Role switched to ${newRole.toUpperCase()} mode.`, 'info');
   };
 
+  const authenticate = async (mode, credentials) => {
+    const response = await apiRequest(`/auth/${mode}`, {
+      method: 'POST',
+      body: credentials
+    });
+    setAuthToken(response.token);
+    setUser(response.user);
+    setAccountDataLoaded(false);
+    return response.user;
+  };
+
+  const updateRiskTolerance = async (riskTolerance) => {
+    if (authToken) {
+      const response = await apiRequest('/auth/profile', {
+        method: 'PATCH',
+        token: authToken,
+        body: { riskTolerance }
+      });
+      setUser(response.user);
+      return;
+    }
+    setUser((previous) => ({ ...previous, riskTolerance }));
+  };
+
+  const logout = () => {
+    setAuthToken(null);
+    setAccountDataLoaded(true);
+    setUser({
+      name: 'Guest User',
+      email: '',
+      studentId: '',
+      role: 'student',
+      riskTolerance: 'Moderate',
+      isAuthenticated: false
+    });
+    setWatchlist(['bitcoin', 'ethereum', 'solana']);
+    setWallet(INITIAL_PAPER_WALLET);
+    setBots(BOT_STRATEGIES);
+    setCompletedLessons(['lesson-1']);
+    setQuizResults({});
+  };
+
   // Active Coin helper
   const activeCoin = cryptos.find((c) => c.id === activeCoinId) || cryptos[0];
 
@@ -414,6 +586,9 @@ export const CryptoProvider = ({ children }) => {
         toggleWatchlist,
         user,
         setUser,
+        authenticate,
+        updateRiskTolerance,
+        logout,
         switchRole,
         wallet,
         executeTrade,

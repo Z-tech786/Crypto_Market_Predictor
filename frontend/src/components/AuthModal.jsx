@@ -1,21 +1,16 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import {
   User,
-  Lock,
   Mail,
-  Shield,
-  CheckCircle,
-  X,
   LogOut,
-  Sliders,
   Sparkles,
   Eye,
   EyeOff
 } from 'lucide-react';
 
 export const AuthModal = ({ isOpen, onClose }) => {
-  const { user, setUser, switchRole, addToast } = useCrypto();
+  const { user, setUser, authenticate, updateRiskTolerance, logout, switchRole, addToast } = useCrypto();
 
   const [mode, setMode] = useState(user.isAuthenticated ? 'profile' : 'login'); // 'login' | 'signup' | 'profile'
   const [email, setEmail] = useState('');
@@ -28,22 +23,25 @@ export const AuthModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setUser({
-      name: email.split('@')[0] || 'Academic Trader',
-      email: email || 'student@university.edu',
-      studentId: studentId || '23L-0568',
-      role: selectedRole,
-      riskTolerance,
-      isAuthenticated: true
-    });
-    addToast('Successfully authenticated into NeuroCrypto!', 'success');
-    onClose();
+    try {
+      if (mode === 'signup') {
+        await authenticate('register', { name, email, studentId, password, role: selectedRole });
+      } else {
+        await authenticate('login', { identifier: email, password });
+      }
+      addToast(mode === 'signup' ? 'Account created successfully.' : 'Successfully authenticated into NeuroCrypto!', 'success');
+      setMode('profile');
+      onClose();
+    } catch (error) {
+      addToast(error.message, 'error');
+    }
   };
 
   const handleQuickDemoLogin = (demoRole) => {
     const isFarhan = demoRole === 'admin';
+    logout();
     setUser({
       name: isFarhan ? 'Farhan Ijaz' : demoRole === 'trader' ? 'Alex Trader' : 'Sarah Student',
       email: `${demoRole}@crypto.edu`,
@@ -52,32 +50,33 @@ export const AuthModal = ({ isOpen, onClose }) => {
       riskTolerance: demoRole === 'trader' ? 'Aggressive' : 'Moderate',
       isAuthenticated: true
     });
+    setMode('profile');
     addToast(`Signed in as ${demoRole.toUpperCase()}`, 'success');
     onClose();
   };
 
-  const handleSaveProfile = (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
-    setUser((prev) => ({
-      ...prev,
-      riskTolerance
-    }));
-    addToast('Profile risk preferences updated.', 'success');
-    onClose();
+    try {
+      await updateRiskTolerance(riskTolerance);
+      addToast('Profile risk preferences updated.', 'success');
+      onClose();
+    } catch (error) {
+      addToast(error.message, 'error');
+    }
   };
 
   const handleLogout = () => {
-    setUser({
-      name: 'Guest User',
-      email: '',
-      studentId: '',
-      role: 'student',
-      riskTolerance: 'Moderate',
-      isAuthenticated: false
-    });
+    logout();
     setMode('login');
     addToast('Logged out of session.', 'info');
   };
+
+  const currentMode = mode === 'signup'
+    ? 'signup'
+    : user.isAuthenticated
+      ? 'profile'
+      : 'login';
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -86,9 +85,9 @@ export const AuthModal = ({ isOpen, onClose }) => {
           <div className="flex items-center gap-2">
             <User size={20} className="text-cyan-400" />
             <h3 className="modal-title">
-              {mode === 'profile'
+              {currentMode === 'profile'
                 ? 'User Profile & Settings'
-                : mode === 'signup'
+                : currentMode === 'signup'
                 ? 'Create Academic Account'
                 : 'Sign In to NeuroCrypto'}
             </h3>
@@ -99,16 +98,16 @@ export const AuthModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Tab switchers if not profile */}
-        {mode !== 'profile' && (
+        {currentMode !== 'profile' && (
           <div className="auth-tab-row">
             <button
-              className={`auth-tab-btn ${mode === 'login' ? 'active' : ''}`}
+              className={`auth-tab-btn ${currentMode === 'login' ? 'active' : ''}`}
               onClick={() => setMode('login')}
             >
               Sign In
             </button>
             <button
-              className={`auth-tab-btn ${mode === 'signup' ? 'active' : ''}`}
+              className={`auth-tab-btn ${currentMode === 'signup' ? 'active' : ''}`}
               onClick={() => setMode('signup')}
             >
               Sign Up
@@ -118,7 +117,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
 
         <div className="auth-body">
           {/* PROFILE VIEW */}
-          {mode === 'profile' && (
+          {currentMode === 'profile' && (
             <div className="profile-view-content">
               <div className="profile-header-badge">
                 <div className="profile-avatar-large">
@@ -179,7 +178,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
           )}
 
           {/* SIGN IN VIEW */}
-          {mode === 'login' && (
+          {currentMode === 'login' && (
             <form onSubmit={handleLogin} className="auth-form">
               <div className="form-group">
                 <label className="form-label">Email or Student ID</label>
@@ -259,7 +258,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
           )}
 
           {/* SIGN UP VIEW */}
-          {mode === 'signup' && (
+          {currentMode === 'signup' && (
             <form onSubmit={handleLogin} className="auth-form">
               <div className="form-group">
                 <label className="form-label">Full Name</label>
@@ -306,7 +305,6 @@ export const AuthModal = ({ isOpen, onClose }) => {
                 >
                   <option value="student">Student (Education & Quizzes focus)</option>
                   <option value="trader">Trader (Paper Trading & Bot focus)</option>
-                  <option value="admin">Admin (Full System Management)</option>
                 </select>
               </div>
 
