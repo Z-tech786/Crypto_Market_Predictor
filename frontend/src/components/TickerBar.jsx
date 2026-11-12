@@ -7,7 +7,7 @@ export const TickerBar = () => {
   const { cryptos, setActiveCoinId, marketDataStatus } = useCrypto();
   const statusLabel = {
     connecting: 'CONNECTING',
-    live: 'LIVE · BINANCE',
+    live: 'LIVE · API',
     offline: 'OFFLINE · RETRYING'
   }[marketDataStatus.status];
   const lastSynced = marketDataStatus.lastUpdated
@@ -17,8 +17,8 @@ export const TickerBar = () => {
     lastSynced +
     (marketDataStatus.error ||
       (marketDataStatus.status === 'live'
-        ? 'Prices are syncing from Binance.'
-        : 'Connecting to Binance live market data.'));
+        ? 'Live prices and history are supplied by the backend market API.'
+        : 'Connecting to the backend market API.'));
 
   return (
     <div className="ticker-bar-wrapper">

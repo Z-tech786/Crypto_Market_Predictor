@@ -25,10 +25,17 @@ app.use('/api', apiRouter);
 
 app.use((error, _req, res, _next) => {
   console.error(error);
-  if (error.name === 'ValidationError') {
-    return res.status(400).json({ error: 'The submitted data is invalid.' });
-  }
-  res.status(500).json({ error: 'An unexpected server error occurred.' });
+  const status = error.name === 'ValidationError'
+    ? 400
+    : Number.isInteger(error.statusCode) && error.statusCode >= 400 && error.statusCode < 600
+      ? error.statusCode
+      : 500;
+  const message = status === 500
+    ? 'An unexpected server error occurred.'
+    : error.name === 'ValidationError'
+      ? 'The submitted data is invalid.'
+      : error.message;
+  res.status(status).json({ error: message });
 });
 
 await connectToDatabase(mongoose, process.env.MONGODB_URI);

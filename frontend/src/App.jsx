@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CryptoProvider, useCrypto } from './context/CryptoContext';
 import { Navbar } from './components/Navbar';
 import { TickerBar } from './components/TickerBar';
@@ -15,23 +15,71 @@ import { Toast } from './components/Toast';
 import { BrainCircuit } from 'lucide-react';
 import './App.css';
 
+const TAB_PATHS = {
+  dashboard: '/markets',
+  prediction: '/ai-prediction',
+  trading: '/paper-trading',
+  education: '/academy',
+  sentiment: '/news-sentiment',
+  portfolio: '/portfolio',
+  admin: '/admin'
+};
+
+const PATH_TABS = Object.fromEntries(
+  Object.entries(TAB_PATHS).map(([tab, path]) => [path, tab])
+);
+PATH_TABS['/'] = 'dashboard';
+
+const normalizePath = (path) => path.replace(/\/+$/, '') || '/';
+
 function MainApp() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    const path = normalizePath(window.location.pathname);
+    return PATH_TABS[path] || 'dashboard';
+  });
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   const { setActiveCoinId } = useCrypto();
 
+  useEffect(() => {
+    const syncTabFromPath = () => {
+      const path = normalizePath(window.location.pathname);
+      const tab = PATH_TABS[path] || 'dashboard';
+      setActiveTab(tab);
+
+      if (path !== TAB_PATHS[tab]) {
+        window.history.replaceState({ tab }, '', TAB_PATHS[tab]);
+      }
+    };
+
+    window.addEventListener('popstate', syncTabFromPath);
+    syncTabFromPath();
+    return () => window.removeEventListener('popstate', syncTabFromPath);
+  }, []);
+
+  const navigateToTab = (tab) => {
+    const path = TAB_PATHS[tab];
+    if (!path) {
+      console.error(`Cannot navigate to unknown tab: ${tab}`);
+      return;
+    }
+
+    if (normalizePath(window.location.pathname) !== path) {
+      window.history.pushState({ tab }, '', path);
+    }
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleNavigateToPrediction = (coinId) => {
     if (coinId) setActiveCoinId(coinId);
-    setActiveTab('prediction');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateToTab('prediction');
   };
 
   const handleNavigateToTrading = (coinId) => {
     if (coinId) setActiveCoinId(coinId);
-    setActiveTab('trading');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateToTab('trading');
   };
 
   return (
@@ -42,7 +90,7 @@ function MainApp() {
       {/* 2. Top Header Navigation */}
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={navigateToTab}
         onOpenAssistant={() => setIsAssistantOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
       />

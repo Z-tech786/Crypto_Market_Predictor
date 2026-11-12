@@ -1,10 +1,11 @@
-export async function apiRequest(path, { method = 'GET', body, token } = {}) {
+export async function apiRequest(path, { method = 'GET', body, token, signal } = {}) {
   const response = await fetch(`/api${path}`, {
     method,
     headers: {
       ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { Authorization: `Bearer ${token}` } : {})
     },
+    signal,
     ...(body === undefined ? {} : { body: JSON.stringify(body) })
   });
 

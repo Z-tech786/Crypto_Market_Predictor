@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { formatUSD, formatPercent } from '../utils/formatters';
+import { apiRequest } from '../utils/api';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -17,7 +18,6 @@ import {
   BrainCircuit,
   TrendingUp,
   TrendingDown,
-  Info,
   Sliders,
   CheckCircle,
   AlertTriangle,
@@ -38,26 +38,57 @@ ChartJS.register(
 );
 
 export const AIPredictionView = ({ onNavigateToTrading }) => {
-  const { cryptos, activeCoin, setActiveCoinId } = useCrypto();
+  const { cryptos, activeCoin: selectedCoin, setActiveCoinId } = useCrypto();
 
   const [timeframe, setTimeframe] = useState('7d'); // '24h' | '7d' | '30d' | '90d'
+  const [predictionRequest, setPredictionRequest] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [showIndicators, setShowIndicators] = useState({
     rsi: true,
     bollinger: true,
     movingAvg: true
   });
 
-  const prediction = activeCoin.aiPrediction || {
-    trend: 'Bullish',
-    confidence: 85.0,
-    target24h: activeCoin.price * 1.02,
-    target7d: activeCoin.price * 1.06,
-    target30d: activeCoin.price * 1.12,
-    target90d: activeCoin.price * 1.25,
-    upperBound7d: activeCoin.price * 1.09,
-    lowerBound7d: activeCoin.price * 1.03,
-    factors: []
-  };
+  useEffect(() => {
+    const controller = new AbortController();
+    apiRequest(`/market/predictions/${selectedCoin.symbol}`, { signal: controller.signal })
+      .then((result) => {
+        setPredictionRequest({ symbol: selectedCoin.symbol, status: 'ready', data: result });
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        setPredictionRequest({ symbol: selectedCoin.symbol, status: 'error', error });
+      });
+
+    return () => controller.abort();
+  }, [selectedCoin.symbol, retryCount]);
+
+  const currentRequest = predictionRequest?.symbol === selectedCoin.symbol
+    ? predictionRequest
+    : null;
+
+  if (currentRequest?.status === 'error') {
+    return (
+      <div className="prediction-page" role="alert">
+        <h2>Forecast unavailable</h2>
+        <p>{currentRequest.error.message}</p>
+        <button className="btn-trade-this-coin" onClick={() => setRetryCount((count) => count + 1)}>
+          Retry forecast
+        </button>
+      </div>
+    );
+  }
+
+  if (currentRequest?.status !== 'ready') {
+    return (
+      <div className="prediction-page" role="status">
+        Loading historical market data and forecast for {selectedCoin.symbol}…
+      </div>
+    );
+  }
+
+  const activeCoin = { ...selectedCoin, ...currentRequest.data };
+  const prediction = activeCoin.aiPrediction;
 
   // Determine target for selected timeframe
   let targetPrice = prediction.target7d;
@@ -107,7 +138,7 @@ export const AIPredictionView = ({ onNavigateToTrading }) => {
         pointBackgroundColor: '#38bdf8'
       },
       {
-        label: 'AI Forecast (LSTM)',
+        label: 'Trend Projection (Regression)',
         data: predPadded,
         borderColor: '#a855f7',
         borderWidth: 2.5,
@@ -117,7 +148,7 @@ export const AIPredictionView = ({ onNavigateToTrading }) => {
         pointBackgroundColor: '#a855f7'
       },
       {
-        label: 'Upper 95% Confidence Band',
+        label: 'Upper Approx. 95% Historical-Volatility Range',
         data: upperPadded,
         borderColor: 'rgba(16, 185, 129, 0.4)',
         borderWidth: 1.5,
@@ -127,7 +158,7 @@ export const AIPredictionView = ({ onNavigateToTrading }) => {
         backgroundColor: 'rgba(168, 85, 247, 0.08)'
       },
       {
-        label: 'Lower 95% Confidence Band',
+        label: 'Lower Approx. 95% Historical-Volatility Range',
         data: lowerPadded,
         borderColor: 'rgba(244, 63, 94, 0.4)',
         borderWidth: 1.5,
@@ -277,12 +308,12 @@ export const AIPredictionView = ({ onNavigateToTrading }) => {
 
         <div className="pred-kpi-card">
           <div className="pred-kpi-header">
-            <span className="pred-kpi-title">Model Confidence</span>
+            <span className="pred-kpi-title">Confidence Estimate</span>
             <BrainCircuit size={18} className="text-cyan-400" />
           </div>
           <div className="pred-kpi-value text-cyan-400">{prediction.confidence}%</div>
           <div className="pred-kpi-sub text-muted">
-            <CheckCircle size={14} className="text-emerald-400" /> High statistical convergence
+            <CheckCircle size={14} className="text-emerald-400" /> Estimated from recent volatility
           </div>
         </div>
 
@@ -293,7 +324,7 @@ export const AIPredictionView = ({ onNavigateToTrading }) => {
           </div>
           <div className="pred-kpi-value text-emerald-400">{prediction.trend}</div>
           <div className="pred-kpi-sub text-muted">
-            Multi-Head Attention Layer
+            30-day historical regression
           </div>
         </div>
 
@@ -306,7 +337,7 @@ export const AIPredictionView = ({ onNavigateToTrading }) => {
             {formatUSD(prediction.lowerBound7d)} - {formatUSD(prediction.upperBound7d)}
           </div>
           <div className="pred-kpi-sub text-muted">
-            95% Bayesian Confidence Interval
+            Approx. 95% historical-volatility range
           </div>
         </div>
       </div>
@@ -316,10 +347,10 @@ export const AIPredictionView = ({ onNavigateToTrading }) => {
         <div className="chart-panel-header">
           <div className="chart-title-area">
             <h3 className="chart-heading">
-              {activeCoin.name} ({activeCoin.symbol}) AI Projection vs Historical Price
+              {activeCoin.name} ({activeCoin.symbol}) Trend Projection vs Historical Price
             </h3>
             <p className="chart-sub">
-              Historical performance synchronized with recurrent LSTM forecast and uncertainty bounds
+              Historical prices and a statistical trend baseline with volatility ranges. Not investment advice.
             </p>
           </div>
 
@@ -390,8 +421,12 @@ export const AIPredictionView = ({ onNavigateToTrading }) => {
                 <span className="ind-desc">Trend-following momentum relationship</span>
               </div>
               <div className="ind-val-box">
-                <span className="ind-number">+{activeCoin.macd}</span>
-                <span className="ind-badge success">Bullish Crossover</span>
+                <span className="ind-number">
+                  {activeCoin.macd >= 0 ? '+' : ''}{activeCoin.macd}
+                </span>
+                <span className={`ind-badge ${activeCoin.macd >= activeCoin.signal ? 'success' : 'danger'}`}>
+                  {activeCoin.macd >= activeCoin.signal ? 'Bullish Crossover' : 'Bearish Crossover'}
+                </span>
               </div>
             </div>
 
@@ -411,7 +446,9 @@ export const AIPredictionView = ({ onNavigateToTrading }) => {
                 <span className="ind-desc">SMA50: {formatUSD(activeCoin.sma50)} | SMA200: {formatUSD(activeCoin.sma200)}</span>
               </div>
               <div className="ind-val-box">
-                <span className="ind-badge success">Golden Cross Aligned</span>
+                <span className={`ind-badge ${activeCoin.sma50 >= activeCoin.sma200 ? 'success' : 'danger'}`}>
+                  {activeCoin.sma50 >= activeCoin.sma200 ? 'Golden Cross Aligned' : 'Death Cross'}
+                </span>
               </div>
             </div>
           </div>
@@ -421,7 +458,7 @@ export const AIPredictionView = ({ onNavigateToTrading }) => {
         <div className="analysis-card">
           <div className="analysis-card-header">
             <BrainCircuit size={18} className="text-purple-400" />
-            <h4>Neural Feature Importance & Drivers</h4>
+            <h4>Historical Forecast Drivers</h4>
           </div>
           <div className="feature-factors-list">
             {prediction.factors && prediction.factors.length > 0 ? (
@@ -452,7 +489,7 @@ export const AIPredictionView = ({ onNavigateToTrading }) => {
       <div className="academic-disclaimer-banner">
         <AlertTriangle size={20} className="text-amber-400 shrink-0" />
         <div className="disclaimer-text">
-          <strong>Academic Simulation Notice:</strong> The predictive models shown are developed for academic research and educational demonstration (Course: Web Programming). Predictions depict statistical probability envelopes based on historical regression and neural sequence modeling. They are <em>not</em> guaranteed prices or financial investment advice.
+          <strong>Academic Simulation Notice:</strong> This forecast is a historical linear-regression baseline with volatility-based ranges, provided for educational demonstration only. It is not a trained neural model, does not guarantee future prices, and is <em>not</em> financial investment advice.
         </div>
       </div>
     </div>

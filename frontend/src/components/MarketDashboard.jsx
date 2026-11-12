@@ -87,27 +87,28 @@ export const MarketDashboard = ({ onNavigateToPrediction, onNavigateToTrading })
       <div className="metrics-grid">
         <div className="metric-card">
           <div className="metric-header">
-            <span className="metric-title">Total Market Cap</span>
+            <span className="metric-title">Tracked Asset Market Cap (est.)</span>
             <Activity size={18} className="text-cyan-400" />
           </div>
           <div className="metric-val">{formatCompact(globalMetrics.totalMarketCap)}</div>
-          <div className="metric-sub positive">
-            <TrendingUp size={14} /> +{globalMetrics.marketCapChange24h}% (24h)
+          <div className={`metric-sub ${globalMetrics.marketCapChange24h >= 0 ? 'positive' : 'negative'}`}>
+            {globalMetrics.marketCapChange24h >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+            {formatPercent(globalMetrics.marketCapChange24h)} (24h)
           </div>
         </div>
 
         <div className="metric-card">
           <div className="metric-header">
-            <span className="metric-title">24h Global Volume</span>
+            <span className="metric-title">Tracked 24h Volume</span>
             <BarChart3 size={18} className="text-blue-400" />
           </div>
           <div className="metric-val">{formatCompact(globalMetrics.volume24h)}</div>
-          <div className="metric-sub text-muted">Across 14k+ Spot Pairs</div>
+          <div className="metric-sub text-muted">Across {globalMetrics.trackedAssets} tracked spot pairs</div>
         </div>
 
         <div className="metric-card">
           <div className="metric-header">
-            <span className="metric-title">BTC Dominance</span>
+            <span className="metric-title">Reference BTC Dominance</span>
             <Layers size={18} className="text-amber-400" />
           </div>
           <div className="metric-val">{globalMetrics.btcDominance}%</div>
@@ -116,12 +117,12 @@ export const MarketDashboard = ({ onNavigateToPrediction, onNavigateToTrading })
 
         <div className="metric-card">
           <div className="metric-header">
-            <span className="metric-title">Market Sentiment</span>
+            <span className="metric-title">Sample Market Sentiment</span>
             <Flame size={18} className="text-rose-400" />
           </div>
           <div className="metric-val">{globalMetrics.fearGreedIndex} / 100</div>
           <div className="metric-sub sentiment-greed">
-            <span className="status-dot"></span> {globalMetrics.fearGreedSentiment}
+            <span className="status-dot"></span> {globalMetrics.fearGreedSentiment} · demo
           </div>
         </div>
       </div>

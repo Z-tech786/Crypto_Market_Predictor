@@ -98,7 +98,7 @@ export const CryptoProvider = ({ children }) => {
     } else {
       localStorage.removeItem('crypto_auth_token');
     }
-  }, [authToken, addToast]);
+  }, [authToken]);
 
   useEffect(() => {
     localStorage.setItem('crypto_paper_wallet', JSON.stringify(wallet));
@@ -126,7 +126,7 @@ export const CryptoProvider = ({ children }) => {
     setAccountDataLoaded(false);
     Promise.all([
       apiRequest('/auth/me', { token: authToken }),
-      apiRequest('/portfolio', { token: authToken }),
+      apiRequest('/paper-trading/wallet', { token: authToken }),
       apiRequest('/watchlist', { token: authToken }),
       apiRequest('/progress', { token: authToken })
     ])
@@ -202,28 +202,24 @@ export const CryptoProvider = ({ children }) => {
       try {
         const symbols = INITIAL_CRYPTO_LIST.map((coin) => `${coin.symbol}USDT`);
         const query = new URLSearchParams({ symbols: JSON.stringify(symbols) });
-        const response = await fetch(
-          `https://api.binance.com/api/v3/ticker/24hr?${query}`,
-          { signal: requestController.signal, cache: 'no-store' }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Binance returned HTTP ${response.status}`);
-        }
-
-        const tickers = await response.json();
-        if (!Array.isArray(tickers)) {
-          throw new Error('Binance returned an invalid ticker response');
+        const marketData = await apiRequest(`/market/tickers?${query}`, {
+          signal: requestController.signal
+        });
+        if (!Array.isArray(marketData.tickers)) {
+          throw new Error('Market API returned an invalid ticker response.');
         }
 
         const liveData = new Map(
-          tickers
-            .map((ticker) => [
-              ticker.symbol,
+          marketData.tickers
+            .map(({ symbol, price, change24h, change7d, volume24h, marketCap, history7d }) => [
+              symbol,
               {
-                price: Number(ticker.lastPrice),
-                change24h: Number(ticker.priceChangePercent),
-                volume24h: Number(ticker.quoteVolume)
+                price: Number(price),
+                change24h: Number(change24h),
+                change7d: Number(change7d),
+                volume24h: Number(volume24h),
+                marketCap: Number(marketCap),
+                history7d: Array.isArray(history7d) ? history7d.map(Number) : []
               }
             ])
             .filter(
@@ -232,12 +228,16 @@ export const CryptoProvider = ({ children }) => {
                 Number.isFinite(data.price) &&
                 data.price > 0 &&
                 Number.isFinite(data.change24h) &&
-                Number.isFinite(data.volume24h)
+                Number.isFinite(data.change7d) &&
+                Number.isFinite(data.volume24h) &&
+                Number.isFinite(data.marketCap) &&
+                data.history7d.length === 7 &&
+                data.history7d.every((price) => Number.isFinite(price) && price > 0)
             )
         );
 
         if (symbols.some((symbol) => !liveData.has(symbol))) {
-          throw new Error('Binance did not return valid prices for every listed coin');
+          throw new Error('Market API did not return valid prices for every listed coin.');
         }
 
         setCryptos((previous) =>
@@ -355,7 +355,7 @@ export const CryptoProvider = ({ children }) => {
       });
 
       if (authToken) {
-        apiRequest('/portfolio/trades', {
+        apiRequest('/paper-trading/orders', {
           method: 'POST',
           token: authToken,
           body: { type, coinId, symbol: coin.symbol, amount: numAmount, price: numPrice, orderType, strategy }
@@ -364,7 +364,7 @@ export const CryptoProvider = ({ children }) => {
           .catch((error) => {
             console.error('Unable to save paper trade:', error);
             addToast(error.message, 'error');
-            apiRequest('/portfolio', { token: authToken }).then(setWallet).catch((refreshError) => {
+            apiRequest('/paper-trading/wallet', { token: authToken }).then(setWallet).catch((refreshError) => {
               console.error('Unable to refresh paper wallet:', refreshError);
             });
           });
@@ -412,7 +412,7 @@ export const CryptoProvider = ({ children }) => {
       });
 
       if (authToken) {
-        apiRequest('/portfolio/trades', {
+        apiRequest('/paper-trading/orders', {
           method: 'POST',
           token: authToken,
           body: { type, coinId, symbol: coin.symbol, amount: numAmount, price: numPrice, orderType, strategy }
@@ -421,7 +421,7 @@ export const CryptoProvider = ({ children }) => {
           .catch((error) => {
             console.error('Unable to save paper trade:', error);
             addToast(error.message, 'error');
-            apiRequest('/portfolio', { token: authToken }).then(setWallet).catch((refreshError) => {
+            apiRequest('/paper-trading/wallet', { token: authToken }).then(setWallet).catch((refreshError) => {
               console.error('Unable to refresh paper wallet:', refreshError);
             });
           });
@@ -473,7 +473,7 @@ export const CryptoProvider = ({ children }) => {
       tradeHistory: []
     });
     if (authToken) {
-      apiRequest('/portfolio/reset', { method: 'POST', token: authToken })
+      apiRequest('/paper-trading/reset', { method: 'POST', token: authToken })
         .then(setWallet)
         .catch((error) => {
           console.error('Unable to reset paper wallet:', error);
@@ -491,7 +491,7 @@ export const CryptoProvider = ({ children }) => {
       previous.map((item) => item.id === botId ? { ...item, active: nextState } : item)
     );
     if (authToken) {
-      apiRequest(`/portfolio/bots/${botId}`, {
+      apiRequest(`/paper-trading/bots/${botId}`, {
         method: 'PATCH',
         token: authToken,
         body: { active: nextState }
@@ -573,13 +573,27 @@ export const CryptoProvider = ({ children }) => {
 
   // Active Coin helper
   const activeCoin = cryptos.find((c) => c.id === activeCoinId) || cryptos[0];
+  const totalMarketCap = cryptos.reduce((sum, coin) => sum + coin.marketCap, 0);
+  const previousMarketCap = cryptos.reduce(
+    (sum, coin) => sum + coin.marketCap / (1 + coin.change24h / 100),
+    0
+  );
+  const globalMetrics = {
+    ...GLOBAL_METRICS,
+    totalMarketCap,
+    marketCapChange24h: previousMarketCap > 0
+      ? ((totalMarketCap - previousMarketCap) / previousMarketCap) * 100
+      : 0,
+    volume24h: cryptos.reduce((sum, coin) => sum + coin.volume24h, 0),
+    trackedAssets: cryptos.length
+  };
 
   return (
     <CryptoContext.Provider
       value={{
         cryptos,
         marketDataStatus,
-        globalMetrics: GLOBAL_METRICS,
+        globalMetrics,
         activeCoin,
         setActiveCoinId,
         watchlist,

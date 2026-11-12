@@ -7,8 +7,10 @@ import { User } from '../models/User.js';
 import { Wallet } from '../models/Wallet.js';
 import { Progress } from '../models/Progress.js';
 import { authenticate } from '../middleware/authenticate.js';
+import { marketRouter } from './market.js';
 
 export const apiRouter = Router();
+apiRouter.use('/market', marketRouter);
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -157,7 +159,7 @@ apiRouter.patch('/auth/profile', authenticate, async (req, res, next) => {
   }
 });
 
-apiRouter.get('/portfolio', authenticate, async (req, res, next) => {
+apiRouter.get('/paper-trading/wallet', authenticate, async (req, res, next) => {
   try {
     const { wallet } = await ensureAccountData(req.userId);
     res.json({
@@ -171,7 +173,7 @@ apiRouter.get('/portfolio', authenticate, async (req, res, next) => {
   }
 });
 
-apiRouter.post('/portfolio/trades', authenticate, async (req, res, next) => {
+apiRouter.post('/paper-trading/orders', authenticate, async (req, res, next) => {
   try {
     const { type, coinId, symbol, amount, price, orderType = 'MARKET', strategy = 'Manual Trader' } = req.body;
     if (
@@ -358,7 +360,7 @@ apiRouter.post('/portfolio/trades', authenticate, async (req, res, next) => {
   }
 });
 
-apiRouter.post('/portfolio/reset', authenticate, async (req, res, next) => {
+apiRouter.post('/paper-trading/reset', authenticate, async (req, res, next) => {
   try {
     const wallet = await Wallet.findOneAndUpdate(
       { userId: req.userId },
@@ -376,7 +378,7 @@ apiRouter.post('/portfolio/reset', authenticate, async (req, res, next) => {
   }
 });
 
-apiRouter.patch('/portfolio/bots/:botId', authenticate, async (req, res, next) => {
+apiRouter.patch('/paper-trading/bots/:botId', authenticate, async (req, res, next) => {
   try {
     const { active } = req.body;
     if (typeof active !== 'boolean') {
