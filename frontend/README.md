@@ -10,8 +10,6 @@ Set-Content .env "JWT_SECRET=replace-with-a-long-random-secret"
 docker compose up --build
 ```
 
-To run it in the background instead:
-
 ```sh
 docker compose up --build -d
 ```

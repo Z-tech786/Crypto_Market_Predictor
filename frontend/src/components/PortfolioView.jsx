@@ -26,50 +26,50 @@ export const PortfolioView = ({ onNavigateToTrading }) => {
   const { cryptos, wallet, executeTrade, addToast } = useCrypto();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [selectedCoinId, setSelectedCoinId] = useState(cryptos[0]?.id || 'bitcoin');
-  const [addAmount, setAddAmount] = useState('');
-  const [addBuyPrice, setAddBuyPrice] = useState('');
+  const [selectedCoinId, setSelectedCoinId] = useState(cryptos[0]?.id || "bitcoin");
+  const [addAmount, setAddAmount] = useState("");
+  const [addBuyPrice, setAddBuyPrice] = useState("");
 
   // Calculate market values & P&L for each holding
-  let totalCryptoValue = 0;
-  let totalCostBasis = 0;
+  let totalCryptoValue = (0);
+  let totalCostBasis = (0);
 
-  const holdingsDetailed = wallet.holdings.map((h) => {
-    const coin = cryptos.find((c) => c.id === h.coinId) || {
-      name: h.symbol,
-      price: h.avgBuyPrice,
-      color: '#38bdf8'
+  const holdingsDetailed = wallet.holdings.map((holding) => {
+    const coin = cryptos.find((cryptoItem) => cryptoItem.id === holding.coinId) || {
+      name: holding.symbol,
+      price: holding.avgBuyPrice,
+      color: "#38bdf8"
     };
 
-    const currentValue = h.amount * coin.price;
-    const costBasis = h.amount * h.avgBuyPrice;
-    const profitLoss = currentValue - costBasis;
-    const profitLossPercent = costBasis > 0 ? (profitLoss / costBasis) * 100 : 0;
+    const currentValue = holding.amount * coin.price;
+    const costBasis = holding.amount * holding.avgBuyPrice;
+    const profitLoss = (currentValue - costBasis);
+    const profitLossPercent = (costBasis > 0) ? ((profitLoss / costBasis) * 100) : (0);
 
-    totalCryptoValue += currentValue;
-    totalCostBasis += costBasis;
+    totalCryptoValue = (totalCryptoValue + currentValue);
+    totalCostBasis = (totalCostBasis + costBasis);
 
     return {
-      ...h,
+      ...holding,
+      color: coin.color || "#38bdf8",
       coinName: coin.name,
       currentPrice: coin.price,
       currentValue,
       costBasis,
       profitLoss,
-      profitLossPercent,
-      color: coin.color || '#38bdf8'
+      profitLossPercent
     };
   });
 
-  const totalPortfolioValue = wallet.usdtBalance + totalCryptoValue;
-  const totalUnrealizedPL = totalCryptoValue - totalCostBasis;
+  const totalPortfolioValue = (wallet.usdtBalance + totalCryptoValue);
+  const totalUnrealizedPL = (totalCryptoValue - totalCostBasis);
   const totalUnrealizedPLPercent =
-    totalCostBasis > 0 ? (totalUnrealizedPL / totalCostBasis) * 100 : 0;
+    (totalCostBasis > 0) ? ((totalUnrealizedPL / totalCostBasis) * 100) : (0);
 
   // Doughnut Chart Data: Cash vs Crypto Holdings
-  const chartLabels = ['USDT (Cash)', ...holdingsDetailed.map((h) => h.symbol)];
-  const chartDataPoints = [wallet.usdtBalance, ...holdingsDetailed.map((h) => h.currentValue)];
-  const chartColors = ['#10b981', ...holdingsDetailed.map((h) => h.color)];
+  const chartLabels = ["USDT (Cash)", ...holdingsDetailed.map((holding) => holding.symbol)];
+  const chartDataPoints = [wallet.usdtBalance, ...holdingsDetailed.map((holding) => holding.currentValue)];
+  const chartColors = ["#10b981", ...holdingsDetailed.map((holding) => holding.color)];
 
   const doughnutData = {
     labels: chartLabels,
@@ -77,7 +77,7 @@ export const PortfolioView = ({ onNavigateToTrading }) => {
       {
         data: chartDataPoints,
         backgroundColor: chartColors,
-        borderColor: '#0b0f19',
+        borderColor: "#0b0f19",
         borderWidth: 2
       }
     ]
@@ -86,44 +86,44 @@ export const PortfolioView = ({ onNavigateToTrading }) => {
   const doughnutOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    cutout: "72%",
     plugins: {
-      legend: {
-        position: 'right',
-        labels: {
-          color: '#94a3b8',
-          font: { family: 'inherit', size: 12 },
-          usePointStyle: true,
-          pointStyle: 'circle'
-        }
-      },
       tooltip: {
         callbacks: {
           label: (context) => {
             const val = context.raw || 0;
-            const pct = totalPortfolioValue > 0 ? ((val / totalPortfolioValue) * 100).toFixed(1) : 0;
+            const pct = (totalPortfolioValue > 0) ? ((val / totalPortfolioValue) * 100).toFixed(1) : 0;
             return ` ${context.label}: $${val.toLocaleString()} (${pct}%)`;
           }
         }
+      },
+      legend: {
+        position: "right",
+        labels: {
+          color: "#94a3b8",
+          font: { family: "inherit", size: 12 },
+          usePointStyle: true,
+          pointStyle: "circle"
+        }
       }
-    },
-    cutout: '72%'
+    }
   };
 
   const handleAddCustomHolding = (e) => {
     e.preventDefault();
-    const numAmt = parseFloat(addAmount);
-    const numPrice = parseFloat(addBuyPrice);
+    const numAmt = (parseFloat(addAmount));
+    const numPrice = (parseFloat(addBuyPrice));
 
-    if (!numAmt || numAmt <= 0 || !numPrice || numPrice <= 0) {
-      addToast('Please enter valid numeric amounts and prices.', 'error');
+    if ((!numAmt) || (numAmt <= 0) || (!numPrice) || (numPrice <= 0)) {
+      addToast("Please enter valid numeric amounts and prices.", "error");
       return;
     }
 
     // Execute simulated buy with manual cost
-    executeTrade('BUY', selectedCoinId, numAmt, numPrice, 'LIMIT', 'Portfolio Import');
+    executeTrade("BUY", selectedCoinId, numAmt, numPrice, "LIMIT", "Portfolio Import");
     setIsAddModalOpen(false);
-    setAddAmount('');
-    setAddBuyPrice('');
+    setAddAmount("");
+    setAddBuyPrice("");
   };
 
   return (
@@ -135,7 +135,7 @@ export const PortfolioView = ({ onNavigateToTrading }) => {
             <span className="port-stat-title">Total Portfolio Value</span>
             <Wallet size={20} className="text-cyan-400" />
           </div>
-          <div className="port-stat-val font-mono">{formatUSD(totalPortfolioValue)}</div>
+          <div className="font-mono port-stat-val">{formatUSD(totalPortfolioValue)}</div>
           <div className="port-stat-sub text-muted">
             Includes USDT cash + live crypto valuations
           </div>
@@ -144,19 +144,19 @@ export const PortfolioView = ({ onNavigateToTrading }) => {
         <div className="port-stat-card">
           <div className="port-stat-top">
             <span className="port-stat-title">Unrealized P&L (Total)</span>
-            {totalUnrealizedPL >= 0 ? (
+            {(totalUnrealizedPL >= 0) ? (
               <TrendingUp size={20} className="text-emerald-400" />
             ) : (
               <TrendingDown size={20} className="text-rose-400" />
             )}
           </div>
           <div
-            className={`port-stat-val font-mono ${totalUnrealizedPL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}
+            className={`font-mono port-stat-val ${(totalUnrealizedPL >= 0) ? "text-emerald-400" : "text-rose-400"}`}
           >
             {formatUSD(totalUnrealizedPL)}
           </div>
           <div
-            className={`port-stat-sub font-mono ${totalUnrealizedPLPercent >= 0 ? 'positive' : 'negative'}`}
+            className={`font-mono port-stat-sub ${(totalUnrealizedPLPercent >= 0) ? "positive" : "negative"}`}
           >
             {formatPercent(totalUnrealizedPLPercent)} ROI
           </div>
@@ -167,7 +167,7 @@ export const PortfolioView = ({ onNavigateToTrading }) => {
             <span className="port-stat-title">Available Cash (USDT)</span>
             <DollarSign size={20} className="text-emerald-400" />
           </div>
-          <div className="port-stat-val font-mono text-emerald-400">
+          <div className="font-mono port-stat-val text-emerald-400">
             {formatUSD(wallet.usdtBalance)}
           </div>
           <div className="port-stat-sub text-muted">Ready for Paper Trading Deployment</div>
@@ -178,8 +178,8 @@ export const PortfolioView = ({ onNavigateToTrading }) => {
             <span className="port-stat-title">Active Assets</span>
             <PieChart size={20} className="text-purple-400" />
           </div>
-          <div className="port-stat-val font-mono">
-            {holdingsDetailed.length + (wallet.usdtBalance > 0 ? 1 : 0)}
+          <div className="font-mono port-stat-val">
+            {holdingsDetailed.length + ((wallet.usdtBalance > 0) ? 1 : 0)}
           </div>
           <div className="port-stat-sub text-muted">Diversified Portfolio Allocations</div>
         </div>
@@ -193,7 +193,7 @@ export const PortfolioView = ({ onNavigateToTrading }) => {
             <PieChart size={18} className="text-purple-400" />
             <h3 className="allocation-heading">Asset Allocation Distribution</h3>
           </div>
-          <div className="doughnut-canvas-wrap" style={{ height: '240px' }}>
+          <div className="doughnut-canvas-wrap" style={{ height: "240px" }}>
             <Doughnut data={doughnutData} options={doughnutOptions} />
           </div>
         </div>
@@ -201,7 +201,7 @@ export const PortfolioView = ({ onNavigateToTrading }) => {
         {/* Quick Actions & Rebalancing Card */}
         <div className="quick-portfolio-action-card">
           <h3 className="card-heading">Portfolio Tools & Controls</h3>
-          <p className="text-muted text-sm mb-4">
+          <p className="text-sm text-muted mb-4">
             Manage your academic paper holdings, import initial test positions, or rebalance into cash.
           </p>
 
@@ -216,7 +216,7 @@ export const PortfolioView = ({ onNavigateToTrading }) => {
 
             <button
               className="btn-open-terminal-rebalance"
-              onClick={() => onNavigateToTrading(holdingsDetailed[0]?.coinId || 'bitcoin')}
+              onClick={() => onNavigateToTrading(holdingsDetailed[0]?.coinId || "bitcoin")}
             >
               <ArrowUpRight size={16} />
               <span>Open Trading Terminal</span>
@@ -253,7 +253,7 @@ export const PortfolioView = ({ onNavigateToTrading }) => {
               </tr>
             </thead>
             <tbody>
-              {holdingsDetailed.length === 0 ? (
+              {(holdingsDetailed.length === 0) ? (
                 <tr>
                   <td colSpan="7" className="no-data-cell">
                     Your portfolio currently holds 100% USDT cash. Place trades on the Trading Terminal to build holdings!
@@ -261,7 +261,7 @@ export const PortfolioView = ({ onNavigateToTrading }) => {
                 </tr>
               ) : (
                 holdingsDetailed.map((item) => {
-                  const isProfit = item.profitLoss >= 0;
+                  const isProfit = (item.profitLoss >= 0);
 
                   return (
                     <tr key={item.coinId}>
@@ -272,7 +272,7 @@ export const PortfolioView = ({ onNavigateToTrading }) => {
                             className="coin-icon-circle-sm"
                             style={{ backgroundColor: `${item.color}22`, borderColor: item.color }}
                           >
-                            <span style={{ color: item.color, fontWeight: 'bold' }}>
+                            <span style={{ color: item.color, fontWeight: "bold" }}>
                               {item.symbol.charAt(0)}
                             </span>
                           </div>
@@ -284,28 +284,28 @@ export const PortfolioView = ({ onNavigateToTrading }) => {
                       </td>
 
                       {/* Holding Amount */}
-                      <td className="text-right font-mono font-medium">
+                      <td className="font-mono text-right font-medium">
                         {item.amount.toLocaleString(undefined, { maximumFractionDigits: 6 })} {item.symbol}
                       </td>
 
                       {/* Avg Entry Price */}
-                      <td className="text-right font-mono text-muted">
+                      <td className="font-mono text-right text-muted">
                         {formatUSD(item.avgBuyPrice)}
                       </td>
 
                       {/* Current Spot Price */}
-                      <td className="text-right font-mono font-semibold">
+                      <td className="font-mono text-right font-semibold">
                         {formatUSD(item.currentPrice)}
                       </td>
 
                       {/* Total Value */}
-                      <td className="text-right font-mono font-bold">
+                      <td className="font-mono text-right font-bold">
                         {formatUSD(item.currentValue)}
                       </td>
 
                       {/* Unrealized P&L */}
-                      <td className="text-right font-mono">
-                        <span className={`pl-tag ${isProfit ? 'positive' : 'negative'}`}>
+                      <td className="font-mono text-right">
+                        <span className={`pl-tag ${(isProfit ? "positive" : "negative")}`}>
                           {formatUSD(item.profitLoss)} ({formatPercent(item.profitLossPercent)})
                         </span>
                       </td>
@@ -331,7 +331,7 @@ export const PortfolioView = ({ onNavigateToTrading }) => {
       {/* 4. Add Holding Modal */}
       {isAddModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsAddModalOpen(false)}>
-          <div className="custom-modal-card" onClick={(e) => e.stopPropagation()}>
+          <div className="custom-modal-card" onClick={(e) => (e.stopPropagation())}>
             <div className="custom-modal-header">
               <h3 className="modal-title">Add Simulated Asset Holding</h3>
               <button className="btn-close-modal" onClick={() => setIsAddModalOpen(false)}>
@@ -347,13 +347,13 @@ export const PortfolioView = ({ onNavigateToTrading }) => {
                   value={selectedCoinId}
                   onChange={(e) => {
                     setSelectedCoinId(e.target.value);
-                    const c = cryptos.find((coin) => coin.id === e.target.value);
+                    const c = cryptos.find((cryptoItem) => cryptoItem.id === e.target.value);
                     if (c) setAddBuyPrice(c.price.toString());
                   }}
                 >
-                  {cryptos.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.symbol}) — Current: {formatUSD(c.price)}
+                  {cryptos.map((cryptoItem) => (
+                    <option key={cryptoItem.id} value={cryptoItem.id}>
+                      {cryptoItem.name} ({cryptoItem.symbol}) — Current: {formatUSD(cryptoItem.price)}
                     </option>
                   ))}
                 </select>
