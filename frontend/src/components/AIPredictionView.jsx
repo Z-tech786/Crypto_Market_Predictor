@@ -1,5 +1,10 @@
+<<<<<<< Updated upstream
 import { useEffect, useState } from 'react';
+=======
+import React, { useState, useEffect } from 'react';
+>>>>>>> Stashed changes
 import { useCrypto } from '../context/CryptoContext';
+import { api } from '../services/api';
 import { formatUSD, formatPercent } from '../utils/formatters';
 import { apiRequest } from '../utils/api';
 import {

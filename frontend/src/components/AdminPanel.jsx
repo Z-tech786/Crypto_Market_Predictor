@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { api } from '../services/api';
 import { useCrypto } from '../context/CryptoContext';
 import { EDUCATION_MODULES } from '../data/educationData';
 import { formatUSD } from '../utils/formatters';
@@ -74,6 +75,16 @@ export const AdminPanel = () => {
 
   // Lessons list for management
   const [modules, setModules] = useState(EDUCATION_MODULES);
+  const [diagnosticsData, setDiagnosticsData] = useState(null);
+
+  useEffect(() => {
+    api.getAdminUsers().then((res) => {
+      if (res && res.success && res.data) setUsersList(res.data);
+    });
+    api.getDiagnostics().then((res) => {
+      if (res && res.success && res.data) setDiagnosticsData(res.data);
+    });
+  }, []);
 
   // New Lesson form state
   const [newLessonTitle, setNewLessonTitle] = useState('');
@@ -87,7 +98,7 @@ export const AdminPanel = () => {
     connecting: 'Connecting',
     live: 'Live',
     offline: 'Offline · retrying'
-  }[marketDataStatus.status];
+  }[marketDataStatus?.status || 'live'] || 'Live';
 
   // User Actions
   const handleToggleUserStatus = (userId) => {
@@ -305,12 +316,12 @@ export const AdminPanel = () => {
               </p>
             </div>
             <div
-              className={`admin-market-status ${marketDataStatus.status}`}
+              className={`admin-market-status ${marketDataStatus?.status || 'live'}`}
               role="status"
               title={
-                marketDataStatus.lastUpdated
+                marketDataStatus?.lastUpdated
                   ? `Last successful sync: ${new Date(marketDataStatus.lastUpdated).toLocaleString()}`
-                  : marketDataStatus.error || 'Waiting for the first market data sync'
+                  : marketDataStatus?.error || 'Waiting for the first market data sync'
               }
             >
               <span className="status-dot"></span>

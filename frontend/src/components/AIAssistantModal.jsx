@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCrypto } from '../context/CryptoContext';
+import { api } from '../services/api';
 import {
   BrainCircuit,
   X,
@@ -125,7 +126,7 @@ In cryptocurrency market analysis and algorithmic systems:
 Feel free to ask me to explain any specific trading indicator, crypto concept, or how to test your strategy using the Paper Trading Bot!`;
   };
 
-  const handleSendMessage = (textToSend = inputQuery) => {
+  const handleSendMessage = async (textToSend = inputQuery) => {
     if (!textToSend.trim()) return;
 
     const userMessage = {
@@ -139,18 +140,32 @@ Feel free to ask me to explain any specific trading indicator, crypto concept, o
     setInputQuery('');
     setIsTyping(true);
 
-    // Simulate thinking & typewriter streaming
-    setTimeout(() => {
-      const replyText = generateAIResponse(textToSend);
-      const aiMessage = {
-        id: `ai-${Date.now()}`,
-        sender: 'ai',
-        text: replyText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-      setIsTyping(false);
-    }, 850);
+    try {
+      const apiResp = await api.askAssistant(textToSend, activeCoin?.name || 'Bitcoin');
+      const replyText = (apiResp && apiResp.reply) ? apiResp.reply : generateAIResponse(textToSend);
+
+      setTimeout(() => {
+        const aiMessage = {
+          id: `ai-${Date.now()}`,
+          sender: 'ai',
+          text: replyText,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setMessages((prev) => [...prev, aiMessage]);
+        setIsTyping(false);
+      }, 500);
+    } catch (e) {
+      setTimeout(() => {
+        const aiMessage = {
+          id: `ai-${Date.now()}`,
+          sender: 'ai',
+          text: generateAIResponse(textToSend),
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setMessages((prev) => [...prev, aiMessage]);
+        setIsTyping(false);
+      }, 500);
+    }
   };
 
   if (!isOpen) return null;

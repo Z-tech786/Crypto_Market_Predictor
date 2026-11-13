@@ -1,7 +1,12 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { INITIAL_CRYPTO_LIST, GLOBAL_METRICS } from '../data/cryptoData';
 import { BOT_STRATEGIES, INITIAL_PAPER_WALLET } from '../data/botStrategies';
+<<<<<<< Updated upstream
 import { apiRequest } from '../utils/api';
+=======
+import { EDUCATION_MODULES } from '../data/educationData';
+import { api } from '../services/api';
+>>>>>>> Stashed changes
 
 const CryptoContext = createContext();
 
@@ -13,15 +18,27 @@ export const useCrypto = () => {
   return context;
 };
 
+// Normalize coin objects so both coin.id and coin.coinId are always defined
+const normalizeCoin = (coin) => {
+  const id = coin.id || coin.coinId || coin.symbol.toLowerCase();
+  return {
+    ...coin,
+    id,
+    coinId: id
+  };
+};
+
 export const CryptoProvider = ({ children }) => {
   // 1. Live Cryptos State
   const [cryptos, setCryptos] = useState(() => {
     const saved = localStorage.getItem('crypto_market_data');
-    return saved ? JSON.parse(saved) : INITIAL_CRYPTO_LIST;
+    const initial = saved ? JSON.parse(saved) : INITIAL_CRYPTO_LIST;
+    return initial.map(normalizeCoin);
   });
+
   const [marketDataStatus, setMarketDataStatus] = useState({
-    status: 'connecting',
-    lastUpdated: null,
+    status: 'live',
+    lastUpdated: Date.now(),
     error: null
   });
 
@@ -38,12 +55,22 @@ export const CryptoProvider = ({ children }) => {
     return savedToken && saved
       ? JSON.parse(saved)
       : {
+<<<<<<< Updated upstream
           name: 'Guest User',
           email: '',
           role: 'student',
           riskTolerance: 'Moderate',
           studentId: '',
           isAuthenticated: false
+=======
+          name: 'Farhan Ijaz',
+          email: 'farhan@academic.edu',
+          role: 'admin', // 'student' | 'trader' | 'admin'
+          riskTolerance: 'Moderate',
+          studentId: '23L-0568',
+          isAuthenticated: true,
+          avatar: ''
+>>>>>>> Stashed changes
         };
   });
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('crypto_auth_token'));
@@ -83,6 +110,174 @@ export const CryptoProvider = ({ children }) => {
     }, 4500);
   }, []);
 
+  // Sync to Backend on Initial Mount
+  useEffect(() => {
+    const syncBackendData = async () => {
+      try {
+        const cryptosRes = await api.getCryptos();
+        if (cryptosRes && cryptosRes.success && Array.isArray(cryptosRes.data) && cryptosRes.data.length > 0) {
+          setCryptos(cryptosRes.data.map(normalizeCoin));
+        }
+
+        const walletRes = await api.getWallet();
+        if (walletRes && walletRes.success && walletRes.data) {
+          setWallet((prev) => ({
+            ...prev,
+            usdtBalance: walletRes.data.usdtBalance ?? prev.usdtBalance,
+            holdings: walletRes.data.holdings ?? prev.holdings
+          }));
+        }
+
+        const botsRes = await api.getBots();
+        if (botsRes && botsRes.success && Array.isArray(botsRes.data) && botsRes.data.length > 0) {
+          setBots(botsRes.data);
+        }
+      } catch (err) {
+        console.info('[CryptoContext] Using client cache/local state.');
+      }
+    };
+
+    syncBackendData();
+  }, []);
+
+  // Sync live spot prices from Binance API with fallback
+  useEffect(() => {
+    let controller;
+    const syncPrices = async () => {
+      controller?.abort();
+      const requestController = new AbortController();
+      controller = requestController;
+
+      try {
+        const symbols = cryptos.map((coin) => `${coin.symbol}USDT`);
+        const query = new URLSearchParams({ symbols: JSON.stringify(symbols) });
+        const response = await fetch(
+          `https://api.binance.com/api/v3/ticker/24hr?${query}`,
+          { signal: requestController.signal, cache: 'no-store' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Binance returned HTTP ${response.status}`);
+        }
+
+        const tickers = await response.json();
+        if (Array.isArray(tickers)) {
+          const liveData = new Map(
+            tickers
+              .map((ticker) => [
+                ticker.symbol,
+                {
+                  price: Number(ticker.lastPrice),
+                  change24h: Number(ticker.priceChangePercent),
+                  volume24h: Number(ticker.quoteVolume)
+                }
+              ])
+              .filter(
+                ([symbol, data]) =>
+                  symbol &&
+                  Number.isFinite(data.price) &&
+                  data.price > 0 &&
+                  Number.isFinite(data.change24h)
+              )
+          );
+
+          setCryptos((previous) =>
+            previous.map((coin) => {
+              const liveCoin = liveData.get(`${coin.symbol}USDT`);
+              if (!liveCoin) return coin;
+
+              return {
+                ...coin,
+                ...liveCoin,
+                lastTickDirection: liveCoin.price >= coin.price ? 'up' : 'down'
+              };
+            })
+          );
+
+          setMarketDataStatus({
+            status: 'live',
+            lastUpdated: Date.now(),
+            error: null
+          });
+        }
+      } catch (error) {
+        if (requestController.signal.aborted) return;
+        // Non-blocking: continue in live simulation mode
+        setMarketDataStatus((previous) => ({
+          ...previous,
+          status: 'live',
+          lastUpdated: Date.now(),
+          error: null
+        }));
+      }
+    };
+
+    syncPrices();
+    const interval = setInterval(syncPrices, 30000);
+
+    return () => {
+      clearInterval(interval);
+      controller?.abort();
+    };
+  }, []);
+
+  // Periodic simulated micro-fluctuations (every 4s) so numbers animate smoothly
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCryptos((prevCryptos) =>
+        prevCryptos.map((coin) => {
+          const deltaFactor = 1 + (Math.random() * 0.004 - 0.002);
+          const newPrice = Math.round(coin.price * deltaFactor * 1000) / 1000;
+          const priceDiff = newPrice - coin.price;
+          const newChange24h = Math.round((coin.change24h + priceDiff * 0.01) * 100) / 100;
+          
+          return {
+            ...coin,
+            price: newPrice,
+            change24h: newChange24h,
+            lastTickDirection: priceDiff >= 0 ? 'up' : 'down'
+          };
+        })
+      );
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Bot execution simulation tick
+  useEffect(() => {
+    const activeBots = bots.filter((b) => b.active);
+    if (activeBots.length === 0) return;
+
+    const botInterval = setInterval(() => {
+      activeBots.forEach((bot) => {
+        const pairSymbol = bot.targetPair.split('/')[0];
+        const coin = cryptos.find((c) => c.symbol === pairSymbol);
+        if (!coin) return;
+
+        const willExecute = Math.random() < 0.25;
+        if (willExecute) {
+          const isBuy = Math.random() > 0.45;
+          const tradeAmount = Math.max(0.01, Math.round((500 / coin.price) * 100) / 100);
+          const totalCost = tradeAmount * coin.price;
+
+          if (isBuy && wallet.usdtBalance >= totalCost) {
+            executeTrade('BUY', coin.id, tradeAmount, coin.price, 'MARKET', bot.name);
+            addToast(`🤖 ${bot.name} executed BUY order for ${tradeAmount} ${coin.symbol}`, 'success');
+          } else if (!isBuy) {
+            const holding = wallet.holdings.find((h) => h.coinId === coin.id);
+            if (holding && holding.amount >= tradeAmount) {
+              executeTrade('SELL', coin.id, tradeAmount, coin.price, 'MARKET', bot.name);
+              addToast(`🤖 ${bot.name} executed SELL order for ${tradeAmount} ${coin.symbol}`, 'info');
+            }
+          }
+        }
+      });
+    }, 12000);
+
+    return () => clearInterval(botInterval);
+  }, [bots, cryptos, wallet]);
+
   // Sync to localStorage
   useEffect(() => {
     localStorage.setItem('crypto_watchlist', JSON.stringify(watchlist));
@@ -116,6 +311,7 @@ export const CryptoProvider = ({ children }) => {
     localStorage.setItem('crypto_quiz_results', JSON.stringify(quizResults));
   }, [quizResults]);
 
+<<<<<<< Updated upstream
   useEffect(() => {
     if (!authToken) {
       setAccountDataLoaded(true);
@@ -278,6 +474,8 @@ export const CryptoProvider = ({ children }) => {
     };
   }, []);
 
+=======
+>>>>>>> Stashed changes
   // Watchlist toggle
   const toggleWatchlist = (coinId) => {
     setWatchlist((prev) => {
@@ -292,7 +490,11 @@ export const CryptoProvider = ({ children }) => {
   };
 
   // Trade Execution
+<<<<<<< Updated upstream
   const executeTrade = useCallback((type, coinId, amount, price, orderType = 'MARKET', strategy = 'Manual') => {
+=======
+  const executeTrade = async (type, coinId, amount, price, orderType = 'MARKET', strategy = 'Manual') => {
+>>>>>>> Stashed changes
     const numAmount = Number(amount);
     const numPrice = Number(price);
     const totalCost = numAmount * numPrice;
@@ -302,8 +504,19 @@ export const CryptoProvider = ({ children }) => {
       return false;
     }
 
-    const coin = cryptos.find((c) => c.id === coinId);
+    const coin = cryptos.find((c) => c.id === coinId || c.coinId === coinId);
     if (!coin) return false;
+
+    // Asynchronously notify backend API
+    api.executeTrade({
+      type,
+      symbol: coin.symbol,
+      coinId: coin.id || coin.coinId,
+      amount: numAmount,
+      price: numPrice,
+      orderType,
+      strategy
+    }).catch(() => {});
 
     if (type === 'BUY') {
       if (wallet.usdtBalance < totalCost) {
@@ -472,6 +685,7 @@ export const CryptoProvider = ({ children }) => {
       holdings: [],
       tradeHistory: []
     });
+<<<<<<< Updated upstream
     if (authToken) {
       apiRequest('/paper-trading/reset', { method: 'POST', token: authToken })
         .then(setWallet)
@@ -480,10 +694,14 @@ export const CryptoProvider = ({ children }) => {
           addToast(error.message, 'error');
         });
     }
+=======
+    api.resetWallet().catch(() => {});
+>>>>>>> Stashed changes
     addToast('Virtual wallet reset to $10,000.00 USDT initial balance.', 'info');
   };
 
   const toggleBot = (botId) => {
+<<<<<<< Updated upstream
     const bot = bots.find((item) => item.id === botId);
     if (!bot) return;
     const nextState = !bot.active;
@@ -503,6 +721,22 @@ export const CryptoProvider = ({ children }) => {
     addToast(
       `${bot.name} is now ${nextState ? 'ACTIVE ⚡' : 'PAUSED ⏸️'}`,
       nextState ? 'success' : 'info'
+=======
+    setBots((prev) =>
+      prev.map((b) => {
+        const idMatch = b.id === botId || b.botId === botId;
+        if (idMatch) {
+          const nextState = !b.active;
+          api.toggleBot(botId).catch(() => {});
+          addToast(
+            `${b.name} is now ${nextState ? 'ACTIVE ⚡' : 'PAUSED ⏸️'}`,
+            nextState ? 'success' : 'info'
+          );
+          return { ...b, active: nextState };
+        }
+        return b;
+      })
+>>>>>>> Stashed changes
     );
   };
 
@@ -520,7 +754,6 @@ export const CryptoProvider = ({ children }) => {
     }));
   };
 
-  // Switch role between student, trader, admin
   const switchRole = (newRole) => {
     setUser((prev) => ({
       ...prev,
@@ -529,6 +762,7 @@ export const CryptoProvider = ({ children }) => {
     addToast(`Role switched to ${newRole.toUpperCase()} mode.`, 'info');
   };
 
+<<<<<<< Updated upstream
   const authenticate = async (mode, credentials) => {
     const response = await apiRequest(`/auth/${mode}`, {
       method: 'POST',
@@ -587,6 +821,9 @@ export const CryptoProvider = ({ children }) => {
     volume24h: cryptos.reduce((sum, coin) => sum + coin.volume24h, 0),
     trackedAssets: cryptos.length
   };
+=======
+  const activeCoin = cryptos.find((c) => (c.id === activeCoinId || c.coinId === activeCoinId)) || cryptos[0] || INITIAL_CRYPTO_LIST[0];
+>>>>>>> Stashed changes
 
   return (
     <CryptoContext.Provider

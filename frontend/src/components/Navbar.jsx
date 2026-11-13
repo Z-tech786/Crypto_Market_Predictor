@@ -106,7 +106,7 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAssistant, onOpenAuth })
             <div className="user-avatar-circle">
               {user.name ? user.name.charAt(0) : 'U'}
             </div>
-            <span className="user-name-text">{user.name.split(' ')[0]}</span>
+            <span className="user-name-text">{user?.name ? user.name.split(' ')[0] : 'User'}</span>
           </button>
         </div>
       </div>
