@@ -22,7 +22,14 @@ export const api = {
     }
   },
 
- 
+  async getGlobalMetrics() {
+    try {
+      const res = await fetch(`${API_BASE_URL}/cryptos/global/metrics`);
+      return await handleResponse(res);
+    } catch (err) {
+      return null;
+    }
+  },
 
   async getPrediction(coinId, horizon = '7d') {
     try {
