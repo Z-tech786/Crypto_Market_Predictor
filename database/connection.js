@@ -4,5 +4,5 @@ export async function connectToDatabase(mongoose, uri) {
   }
 
   await mongoose.connect(uri);
-  console.log('Connected to MongoDB');
+ 
 }
