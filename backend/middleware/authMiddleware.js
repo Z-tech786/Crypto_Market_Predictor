@@ -43,6 +43,6 @@ export const requireRole = (...roles) => {
         message: `Forbidden: role '${req.user?.role || 'guest'}' does not have access to this resource`
       });
     }
-    next();
+   
   };
 };
