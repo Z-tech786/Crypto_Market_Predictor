@@ -6,16 +6,7 @@ const router = express.Router();
 let memoryBots = [...SEED_BOTS];
 
 // Get bots
-router.get('/', async (req, res) => {
-  try {
-    let bots = await Bot.find();
-    if (!bots || bots.length === 0) {
-      bots = memoryBots;
-    }
-    return res.json({ success: true, count: bots.length, data: bots });
-  } catch (err) {
-    return res.json({ success: true, count: memoryBots.length, data: memoryBots });
-  }
+
 });
 
 // Toggle bot
