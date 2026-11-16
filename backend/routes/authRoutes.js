@@ -46,7 +46,15 @@ router.post('/register', async (req, res) => {
     return res.status(201).json({
       success: true,
       token,
-  
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        studentId: user.studentId,
+        role: user.role,
+        riskTolerance: user.riskTolerance,
+        balance: user.balance
+      }
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
