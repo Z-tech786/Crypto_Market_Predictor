@@ -15,6 +15,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { AIAssistantModal } from './components/AIAssistantModal';
 import { AuthModal } from './components/AuthModal';
 import { Toast } from './components/Toast';
+import { PakistanFlag } from './components/PakistanFlag';
 import { BrainCircuit } from 'lucide-react';
 import './App.css';
 
@@ -183,8 +184,14 @@ function MainApp() {
 
           <div className="footer-middle">
             <div className="academic-authors">
-              <span className="author-tag">Farhan Ijaz (23L-0568)</span>
-              <span className="author-tag">Zain-ul-Abideen (23L-0858)</span>
+              <span className="author-tag flex items-center gap-1.5">
+                <PakistanFlag width={18} height={12} />
+                <span>Farhan Ijaz (23L-0568)</span>
+              </span>
+              <span className="author-tag flex items-center gap-1.5">
+                <PakistanFlag width={18} height={12} />
+                <span>Zain-ul-Abideen (23L-0858)</span>
+              </span>
             </div>
           </div>
 

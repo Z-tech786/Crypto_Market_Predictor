@@ -1,4 +1,5 @@
 import React from 'react';
+import { PakistanFlag } from './PakistanFlag';
 import {
   GraduationCap,
   BrainCircuit,
@@ -15,7 +16,8 @@ import {
   ExternalLink,
   Award,
   Terminal,
-  CheckCircle2
+  CheckCircle2,
+  Heart
 } from 'lucide-react';
 
 export const AboutPage = ({ onNavigate }) => {
@@ -23,13 +25,15 @@ export const AboutPage = ({ onNavigate }) => {
     {
       name: 'Farhan Ijaz',
       rollNumber: '23L-0568',
-      role: 'Full-Stack Architecture & AI Services',
+      role: 'Co-Founder • Full-Stack Architecture & AI Services',
+      image: '/farhan.jpeg',
       description: 'Engineered the Express.js REST API layer, MongoDB persistence pipelines, Python FastAPI microservice integration, and PyTorch LSTM predictive models.'
     },
     {
       name: 'Zain-ul-Abideen',
       rollNumber: '23L-0858',
-      role: 'Frontend UI/UX, Trading Simulations & MQL5',
+      role: 'Co-Founder • Frontend UI/UX, Trading Simulations & MQL5',
+      image: '/zain.jpeg',
       description: 'Architected the React 19 single-page dashboard, Chart.js visualizations, paper trading simulation terminal, quiz engines, and custom MetaTrader 5 MQL5 Expert Advisors.'
     }
   ];
@@ -73,21 +77,50 @@ export const AboutPage = ({ onNavigate }) => {
         </div>
       </section>
 
-      {/* 2. Group Members / Authors */}
+      {/* 2. Group Members / Founders & Authors */}
       <section className="about-team-section">
-        <h2 className="section-heading text-center">Project Authors & Developers</h2>
+        {/* Pakistani Flag National Heritage Ribbon */}
+        <div className="pakistan-flag-hero-banner">
+          <PakistanFlag width={36} height={24} />
+          <div className="flag-hero-text">
+            <span className="flag-hero-title">Proudly Engineered in the Islamic Republic of Pakistan</span>
+            <span className="flag-hero-sub">National University of Computer and Emerging Sciences (FAST NUCES) • Lahore Campus</span>
+          </div>
+          <PakistanFlag width={36} height={24} />
+        </div>
+
+        <h2 className="section-heading text-center">Project Founders & Lead Developers</h2>
         <p className="section-subheading text-center max-w-xl">
-          Developed as the comprehensive final evaluation project for Web Programming.
+          Designed and implemented as the final capstone evaluation project for Web Programming.
         </p>
 
         <div className="team-cards-grid">
           {teamMembers.map((member, idx) => (
-            <div key={idx} className="team-card">
-              <div className="team-card-avatar">
-                {member.name.charAt(0)}
+            <div key={idx} className="team-card founder-card">
+              <div className="founder-photo-container">
+                <img
+                  src={member.image}
+                  alt={member.name}
+                  className="founder-photo-img"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const fallback = e.currentTarget.parentElement?.querySelector('.fallback-avatar');
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+                <div className="team-card-avatar fallback-avatar" style={{ display: 'none' }}>
+                  {member.name.charAt(0)}
+                </div>
+                <div className="founder-flag-badge" title="Flag of Pakistan">
+                  <PakistanFlag width={20} height={14} />
+                </div>
               </div>
+
               <div className="team-card-info">
-                <h3 className="team-member-name">{member.name}</h3>
+                <div className="founder-title-row">
+                  <h3 className="team-member-name">{member.name}</h3>
+                  <PakistanFlag width={22} height={15} className="founder-name-flag" />
+                </div>
                 <div className="team-roll-badge">
                   <span>Roll No: {member.rollNumber}</span>
                 </div>

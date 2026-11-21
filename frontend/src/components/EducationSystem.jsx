@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { EDUCATION_MODULES, FACULTY_MEMBERS } from '../data/educationData';
+import { PakistanFlag } from './PakistanFlag';
 import confetti from 'canvas-confetti';
 import {
   GraduationCap,
@@ -494,21 +495,52 @@ export const EducationSystem = () => {
 
           {/* Faculty Profile Cards Grid */}
           <div className="faculty-cards-grid">
-            {FACULTY_MEMBERS.map((faculty) => (
-              <div key={faculty.id} className="faculty-profile-card">
-                <div className="faculty-card-header">
-                  <div
-                    className="faculty-avatar-circle"
-                    style={{ backgroundColor: `${faculty.color}22`, borderColor: faculty.color, color: faculty.color }}
-                  >
-                    {faculty.avatar}
+            {FACULTY_MEMBERS.map((faculty) => {
+              const isFarhan = faculty.id === 'farhan-ijaz';
+              const isZain = faculty.id === 'zain-ul-abideen';
+              const founderImg = isFarhan ? '/farhan.jpeg' : isZain ? '/zain.jpeg' : null;
+
+              return (
+                <div key={faculty.id} className="faculty-profile-card">
+                  <div className="faculty-card-header">
+                    <div className="faculty-avatar-container">
+                      {founderImg ? (
+                        <img
+                          src={founderImg}
+                          alt={faculty.name}
+                          className="faculty-photo-img"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.parentElement?.querySelector('.fallback-fac-avatar');
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className="faculty-avatar-circle fallback-fac-avatar"
+                        style={{
+                          backgroundColor: `${faculty.color}22`,
+                          borderColor: faculty.color,
+                          color: faculty.color,
+                          display: founderImg ? 'none' : 'flex'
+                        }}
+                      >
+                        {faculty.avatar}
+                      </div>
+                      <div className="faculty-flag-badge" title="Flag of Pakistan">
+                        <PakistanFlag width={18} height={12} />
+                      </div>
+                    </div>
+
+                    <div className="faculty-identity">
+                      <div className="flex items-center gap-2">
+                        <h4 className="faculty-name">{faculty.name}</h4>
+                        <PakistanFlag width={18} height={12} />
+                      </div>
+                      <span className="faculty-title">{faculty.title}</span>
+                      <span className="faculty-dept">{faculty.department}</span>
+                    </div>
                   </div>
-                  <div className="faculty-identity">
-                    <h4 className="faculty-name">{faculty.name}</h4>
-                    <span className="faculty-title">{faculty.title}</span>
-                    <span className="faculty-dept">{faculty.department}</span>
-                  </div>
-                </div>
 
                 <div className="faculty-qualification">
                   <strong>Academic Credentials:</strong> {faculty.qualification}
@@ -549,7 +581,8 @@ export const EducationSystem = () => {
                   <span>Consult {faculty.name.split(' ')[0]} {faculty.name.split(' ')[1]}</span>
                 </button>
               </div>
-            ))}
+            );
+          })}
           </div>
 
           {/* Interactive Teacher Consultation / Academic Q&A Panel */}
