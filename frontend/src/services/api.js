@@ -31,9 +31,22 @@ export const api = {
     }
   },
 
-  async getPrediction(coinId, horizon = '7d') {
+  async getPrediction(coinId, horizon = '7d', forceRetrain = false) {
     try {
-      const res = await fetch(`${API_BASE_URL}/cryptos/${coinId}/prediction?horizon=${horizon}`);
+      const res = await fetch(`${API_BASE_URL}/cryptos/${coinId}/prediction?horizon=${horizon}&forceRetrain=${forceRetrain}`);
+      return await handleResponse(res);
+    } catch (err) {
+      return null;
+    }
+  },
+
+  async retrainModel(coinId, epochs = 45) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/cryptos/${coinId}/retrain`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ epochs })
+      });
       return await handleResponse(res);
     } catch (err) {
       return null;
