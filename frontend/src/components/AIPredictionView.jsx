@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
 import { useEffect, useState } from 'react';
-=======
-import React, { useState, useEffect } from 'react';
->>>>>>> Stashed changes
 import { useCrypto } from '../context/CryptoContext';
 import { api } from '../services/api';
 import { formatUSD, formatPercent } from '../utils/formatters';
@@ -173,15 +169,15 @@ export const AIPredictionView = ({ onNavigateToTrading }) => {
       },
       ...(showIndicators.movingAvg
         ? [
-            {
-              label: 'SMA (20-Period)',
-              data: smaPadded,
-              borderColor: '#f59e0b',
-              borderWidth: 1.5,
-              pointRadius: 0,
-              tension: 0.3
-            }
-          ]
+          {
+            label: 'SMA (20-Period)',
+            data: smaPadded,
+            borderColor: '#f59e0b',
+            borderWidth: 1.5,
+            pointRadius: 0,
+            tension: 0.3
+          }
+        ]
         : [])
     ]
   };

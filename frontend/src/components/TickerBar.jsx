@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { formatUSD, formatPercent } from '../utils/formatters';
 import { TrendingUp, TrendingDown } from 'lucide-react';
@@ -9,9 +9,9 @@ export const TickerBar = () => {
   const status = marketDataStatus?.status || 'live';
   const statusLabel = {
     connecting: 'CONNECTING',
-    live: 'LIVE · API',
-    offline: 'OFFLINE · RETRYING'
-  }[status] || 'LIVE · FEEDS';
+    live: 'LIVE Â· API',
+    offline: 'OFFLINE Â· RETRYING'
+  }[status] || 'LIVE Â· FEEDS';
 
   const lastSynced = marketDataStatus?.lastUpdated
     ? `Last successful sync: ${new Date(marketDataStatus.lastUpdated).toLocaleTimeString()}. `
@@ -19,17 +19,10 @@ export const TickerBar = () => {
 
   const statusTitle =
     lastSynced +
-<<<<<<< Updated upstream
-    (marketDataStatus.error ||
-      (marketDataStatus.status === 'live'
-        ? 'Live prices and history are supplied by the backend market API.'
-        : 'Connecting to the backend market API.'));
-=======
     (marketDataStatus?.error ||
       (status === 'live'
         ? 'Prices are syncing from Binance & Backend.'
         : 'Connecting to live market data.'));
->>>>>>> Stashed changes
 
   return (
     <div className="ticker-bar-wrapper">

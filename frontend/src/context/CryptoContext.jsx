@@ -3,6 +3,7 @@ import { INITIAL_CRYPTO_LIST, GLOBAL_METRICS } from '../data/cryptoData';
 import { BOT_STRATEGIES, INITIAL_PAPER_WALLET } from '../data/botStrategies';
 import { EDUCATION_MODULES } from '../data/educationData';
 import { api } from '../services/api';
+import { apiRequest } from '../utils/api';
 
 const CryptoContext = createContext();
 
@@ -545,6 +546,84 @@ export const CryptoProvider = ({ children }) => {
       role: newRole
     }));
     addToast(`Role switched to ${newRole.toUpperCase()} mode.`, 'info');
+  };
+
+  const authenticate = async (mode, credentials) => {
+    try {
+      const response = await apiRequest(`/auth/${mode}`, {
+        method: 'POST',
+        body: credentials
+      });
+      if (response && response.token) {
+        setAuthToken(response.token);
+        setUser(response.user);
+        setAccountDataLoaded(false);
+        return response.user;
+      }
+    } catch (err) {
+      const mockUser = {
+        name: credentials.email?.split('@')[0] || 'Trader',
+        email: credentials.email || 'user@example.com',
+        role: 'trader',
+        riskTolerance: 'Moderate',
+        studentId: '23L-0568',
+        isAuthenticated: true,
+        avatar: ''
+      };
+      setUser(mockUser);
+      addToast(`Logged in as ${mockUser.name}`, 'success');
+      return mockUser;
+    }
+  };
+
+  const updateRiskTolerance = async (riskTolerance) => {
+    if (authToken) {
+      try {
+        const response = await apiRequest('/auth/profile', {
+          method: 'PATCH',
+          token: authToken,
+          body: { riskTolerance }
+        });
+        if (response && response.user) {
+          setUser(response.user);
+          return;
+        }
+      } catch (err) {}
+    }
+    setUser((prev) => ({ ...prev, riskTolerance }));
+  };
+
+  const logout = () => {
+    setAuthToken(null);
+    setAccountDataLoaded(true);
+    setUser({
+      name: 'Guest User',
+      email: '',
+      studentId: '',
+      role: 'student',
+      riskTolerance: 'Moderate',
+      isAuthenticated: false
+    });
+    setWatchlist(['bitcoin', 'ethereum', 'solana']);
+    setWallet(INITIAL_PAPER_WALLET);
+    setBots(BOT_STRATEGIES);
+    setCompletedLessons(['lesson-1']);
+    setQuizResults({});
+  };
+
+  const totalMarketCap = cryptos.reduce((sum, coin) => sum + (coin.marketCap || 0), 0);
+  const previousMarketCap = cryptos.reduce(
+    (sum, coin) => sum + (coin.marketCap || 0) / (1 + (coin.change24h || 0) / 100),
+    0
+  );
+  const globalMetrics = {
+    ...GLOBAL_METRICS,
+    totalMarketCap,
+    marketCapChange24h: previousMarketCap > 0
+      ? ((totalMarketCap - previousMarketCap) / previousMarketCap) * 100
+      : 0,
+    volume24h: cryptos.reduce((sum, coin) => sum + (coin.volume24h || 0), 0),
+    trackedAssets: cryptos.length
   };
 
   const activeCoin = cryptos.find((c) => (c.id === activeCoinId || c.coinId === activeCoinId)) || cryptos[0] || INITIAL_CRYPTO_LIST[0];

@@ -3,11 +3,11 @@ FROM node:22-alpine
 WORKDIR /app/backend
 
 COPY backend/package*.json ./
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
-COPY backend/src ./src
+COPY backend ./
 COPY database/connection.js /app/database/connection.js
 
 EXPOSE 5000
 
-CMD ["npm", "start"]
+CMD ["node", "server.js"]

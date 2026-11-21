@@ -10,16 +10,27 @@ services:
       timeout: 5s
       retries: 5
 
+  ai_service:
+    build:
+      context: ../ai_service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+
   backend:
     build:
       context: ..
       dockerfile: backend/Dockerfile
     restart: unless-stopped
+    ports:
+      - "5000:5000"
     environment:
       PORT: 5000
       MONGODB_URI: mongodb://mongo:27017/crypto_market_predictor
-      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in frontend/.env}
-      CLIENT_ORIGIN: http://localhost:8081
+      JWT_SECRET: ${JWT_SECRET:-43I_5g4Tsw2YdWphZHjrv6oWa7RPiVdnidLCp6qmrXyGNSIg2r23Vh40M3_3MYnq}
+      CLIENT_ORIGIN: http://localhost:8081,http://localhost:5173
+      AI_SERVICE_URL: http://ai_service:8000
     depends_on:
       mongo:
         condition: service_healthy
