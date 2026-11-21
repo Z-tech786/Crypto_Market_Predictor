@@ -27,7 +27,7 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAssistant, onOpenAuth })
     { id: 'prediction', label: 'AI Prediction', icon: BrainCircuit, badge: 'AI ML' },
     { id: 'chat', label: 'Bol AI', icon: MessageSquare, badge: 'Groq' },
     { id: 'trading', label: 'Paper Trading & Bots', icon: Bot, badge: 'Sim' },
-    { id: 'education', label: 'Academy', icon: GraduationCap },
+    { id: 'education', label: 'Education', icon: GraduationCap },
     { id: 'sentiment', label: 'News & Sentiment', icon: Newspaper },
     { id: 'portfolio', label: 'Portfolio', icon: PieChart },
     { id: 'about', label: 'About', icon: Info },

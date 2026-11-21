@@ -24,7 +24,7 @@ const TAB_PATHS = {
   prediction: '/ai-prediction',
   chat: '/bol-ai',
   trading: '/paper-trading',
-  education: '/academy',
+  education: '/education',
   sentiment: '/news-sentiment',
   portfolio: '/portfolio',
   about: '/about',
@@ -38,6 +38,8 @@ PATH_TABS['/'] = 'home';
 PATH_TABS['/home'] = 'home';
 PATH_TABS['/bol-ai'] = 'chat';
 PATH_TABS['/chat'] = 'chat';
+PATH_TABS['/education'] = 'education';
+PATH_TABS['/academy'] = 'education';
 
 const normalizePath = (path) => path.replace(/\/+$/, '') || '/';
 
