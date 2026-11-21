@@ -1,12 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { INITIAL_CRYPTO_LIST, GLOBAL_METRICS } from '../data/cryptoData';
 import { BOT_STRATEGIES, INITIAL_PAPER_WALLET } from '../data/botStrategies';
-<<<<<<< Updated upstream
-import { apiRequest } from '../utils/api';
-=======
 import { EDUCATION_MODULES } from '../data/educationData';
 import { api } from '../services/api';
->>>>>>> Stashed changes
 
 const CryptoContext = createContext();
 
@@ -55,14 +51,6 @@ export const CryptoProvider = ({ children }) => {
     return savedToken && saved
       ? JSON.parse(saved)
       : {
-<<<<<<< Updated upstream
-          name: 'Guest User',
-          email: '',
-          role: 'student',
-          riskTolerance: 'Moderate',
-          studentId: '',
-          isAuthenticated: false
-=======
           name: 'Farhan Ijaz',
           email: 'farhan@academic.edu',
           role: 'admin', // 'student' | 'trader' | 'admin'
@@ -70,7 +58,6 @@ export const CryptoProvider = ({ children }) => {
           studentId: '23L-0568',
           isAuthenticated: true,
           avatar: ''
->>>>>>> Stashed changes
         };
   });
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('crypto_auth_token'));
@@ -311,171 +298,6 @@ export const CryptoProvider = ({ children }) => {
     localStorage.setItem('crypto_quiz_results', JSON.stringify(quizResults));
   }, [quizResults]);
 
-<<<<<<< Updated upstream
-  useEffect(() => {
-    if (!authToken) {
-      setAccountDataLoaded(true);
-      return;
-    }
-
-    let active = true;
-    setAccountDataLoaded(false);
-    Promise.all([
-      apiRequest('/auth/me', { token: authToken }),
-      apiRequest('/paper-trading/wallet', { token: authToken }),
-      apiRequest('/watchlist', { token: authToken }),
-      apiRequest('/progress', { token: authToken })
-    ])
-      .then(([account, savedWallet, savedWatchlist, progress]) => {
-        if (!active) return;
-        setUser(account.user);
-        setWallet(savedWallet);
-        setBots((current) =>
-          current.map((bot) => ({
-            ...bot,
-            active: savedWallet.bots?.find((savedBot) => savedBot.id === bot.id)?.active ?? false
-          }))
-        );
-        setWatchlist(savedWatchlist.watchlist);
-        setCompletedLessons(progress.completedLessons);
-        setQuizResults(progress.quizResults);
-      })
-      .catch((error) => {
-        if (!active) return;
-        console.error('Unable to load account data:', error);
-        setAuthToken(null);
-        setUser({
-          name: 'Guest User',
-          email: '',
-          studentId: '',
-          role: 'student',
-          riskTolerance: 'Moderate',
-          isAuthenticated: false
-        });
-        addToast(error.message, 'error');
-      })
-      .finally(() => {
-        if (active) setAccountDataLoaded(true);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [authToken, addToast]);
-
-  useEffect(() => {
-    if (!authToken || !accountDataLoaded) return;
-    apiRequest('/watchlist', {
-      method: 'PUT',
-      token: authToken,
-      body: { watchlist }
-    }).catch((error) => {
-      console.error('Unable to save watchlist:', error);
-      addToast(error.message, 'error');
-    });
-  }, [watchlist, authToken, accountDataLoaded, addToast]);
-
-  useEffect(() => {
-    if (!authToken || !accountDataLoaded) return;
-    apiRequest('/progress', {
-      method: 'PUT',
-      token: authToken,
-      body: { completedLessons, quizResults }
-    }).catch((error) => {
-      console.error('Unable to save learning progress:', error);
-      addToast(error.message, 'error');
-    });
-  }, [completedLessons, quizResults, authToken, accountDataLoaded, addToast]);
-
-  // Sync live spot prices and 24-hour changes from Binance every 30 seconds.
-  useEffect(() => {
-    let controller;
-    const syncPrices = async () => {
-      controller?.abort();
-      const requestController = new AbortController();
-      controller = requestController;
-
-      try {
-        const symbols = INITIAL_CRYPTO_LIST.map((coin) => `${coin.symbol}USDT`);
-        const query = new URLSearchParams({ symbols: JSON.stringify(symbols) });
-        const marketData = await apiRequest(`/market/tickers?${query}`, {
-          signal: requestController.signal
-        });
-        if (!Array.isArray(marketData.tickers)) {
-          throw new Error('Market API returned an invalid ticker response.');
-        }
-
-        const liveData = new Map(
-          marketData.tickers
-            .map(({ symbol, price, change24h, change7d, volume24h, marketCap, history7d }) => [
-              symbol,
-              {
-                price: Number(price),
-                change24h: Number(change24h),
-                change7d: Number(change7d),
-                volume24h: Number(volume24h),
-                marketCap: Number(marketCap),
-                history7d: Array.isArray(history7d) ? history7d.map(Number) : []
-              }
-            ])
-            .filter(
-              ([symbol, data]) =>
-                symbol &&
-                Number.isFinite(data.price) &&
-                data.price > 0 &&
-                Number.isFinite(data.change24h) &&
-                Number.isFinite(data.change7d) &&
-                Number.isFinite(data.volume24h) &&
-                Number.isFinite(data.marketCap) &&
-                data.history7d.length === 7 &&
-                data.history7d.every((price) => Number.isFinite(price) && price > 0)
-            )
-        );
-
-        if (symbols.some((symbol) => !liveData.has(symbol))) {
-          throw new Error('Market API did not return valid prices for every listed coin.');
-        }
-
-        setCryptos((previous) =>
-          previous.map((coin) => {
-            const liveCoin = liveData.get(`${coin.symbol}USDT`);
-            if (!liveCoin) return coin;
-
-            return {
-              ...coin,
-              ...liveCoin,
-              lastTickDirection: liveCoin.price >= coin.price ? 'up' : 'down'
-            };
-          })
-        );
-        setMarketDataStatus({
-          status: 'live',
-          lastUpdated: Date.now(),
-          error: null
-        });
-      } catch (error) {
-        if (requestController.signal.aborted) return;
-
-        console.error('Unable to sync live cryptocurrency prices:', error);
-        setMarketDataStatus((previous) => ({
-          ...previous,
-          status: 'offline',
-          error: error.message
-        }));
-      }
-    };
-
-    syncPrices();
-    const interval = setInterval(syncPrices, 30000);
-
-    return () => {
-      clearInterval(interval);
-      controller?.abort();
-    };
-  }, []);
-
-=======
->>>>>>> Stashed changes
   // Watchlist toggle
   const toggleWatchlist = (coinId) => {
     setWatchlist((prev) => {
@@ -490,11 +312,7 @@ export const CryptoProvider = ({ children }) => {
   };
 
   // Trade Execution
-<<<<<<< Updated upstream
   const executeTrade = useCallback((type, coinId, amount, price, orderType = 'MARKET', strategy = 'Manual') => {
-=======
-  const executeTrade = async (type, coinId, amount, price, orderType = 'MARKET', strategy = 'Manual') => {
->>>>>>> Stashed changes
     const numAmount = Number(amount);
     const numPrice = Number(price);
     const totalCost = numAmount * numPrice;
@@ -685,43 +503,11 @@ export const CryptoProvider = ({ children }) => {
       holdings: [],
       tradeHistory: []
     });
-<<<<<<< Updated upstream
-    if (authToken) {
-      apiRequest('/paper-trading/reset', { method: 'POST', token: authToken })
-        .then(setWallet)
-        .catch((error) => {
-          console.error('Unable to reset paper wallet:', error);
-          addToast(error.message, 'error');
-        });
-    }
-=======
     api.resetWallet().catch(() => {});
->>>>>>> Stashed changes
     addToast('Virtual wallet reset to $10,000.00 USDT initial balance.', 'info');
   };
 
   const toggleBot = (botId) => {
-<<<<<<< Updated upstream
-    const bot = bots.find((item) => item.id === botId);
-    if (!bot) return;
-    const nextState = !bot.active;
-    setBots((previous) =>
-      previous.map((item) => item.id === botId ? { ...item, active: nextState } : item)
-    );
-    if (authToken) {
-      apiRequest(`/paper-trading/bots/${botId}`, {
-        method: 'PATCH',
-        token: authToken,
-        body: { active: nextState }
-      }).catch((error) => {
-        console.error('Unable to save bot state:', error);
-        addToast(error.message, 'error');
-      });
-    }
-    addToast(
-      `${bot.name} is now ${nextState ? 'ACTIVE ⚡' : 'PAUSED ⏸️'}`,
-      nextState ? 'success' : 'info'
-=======
     setBots((prev) =>
       prev.map((b) => {
         const idMatch = b.id === botId || b.botId === botId;
@@ -736,7 +522,6 @@ export const CryptoProvider = ({ children }) => {
         }
         return b;
       })
->>>>>>> Stashed changes
     );
   };
 
@@ -762,68 +547,7 @@ export const CryptoProvider = ({ children }) => {
     addToast(`Role switched to ${newRole.toUpperCase()} mode.`, 'info');
   };
 
-<<<<<<< Updated upstream
-  const authenticate = async (mode, credentials) => {
-    const response = await apiRequest(`/auth/${mode}`, {
-      method: 'POST',
-      body: credentials
-    });
-    setAuthToken(response.token);
-    setUser(response.user);
-    setAccountDataLoaded(false);
-    return response.user;
-  };
-
-  const updateRiskTolerance = async (riskTolerance) => {
-    if (authToken) {
-      const response = await apiRequest('/auth/profile', {
-        method: 'PATCH',
-        token: authToken,
-        body: { riskTolerance }
-      });
-      setUser(response.user);
-      return;
-    }
-    setUser((previous) => ({ ...previous, riskTolerance }));
-  };
-
-  const logout = () => {
-    setAuthToken(null);
-    setAccountDataLoaded(true);
-    setUser({
-      name: 'Guest User',
-      email: '',
-      studentId: '',
-      role: 'student',
-      riskTolerance: 'Moderate',
-      isAuthenticated: false
-    });
-    setWatchlist(['bitcoin', 'ethereum', 'solana']);
-    setWallet(INITIAL_PAPER_WALLET);
-    setBots(BOT_STRATEGIES);
-    setCompletedLessons(['lesson-1']);
-    setQuizResults({});
-  };
-
-  // Active Coin helper
-  const activeCoin = cryptos.find((c) => c.id === activeCoinId) || cryptos[0];
-  const totalMarketCap = cryptos.reduce((sum, coin) => sum + coin.marketCap, 0);
-  const previousMarketCap = cryptos.reduce(
-    (sum, coin) => sum + coin.marketCap / (1 + coin.change24h / 100),
-    0
-  );
-  const globalMetrics = {
-    ...GLOBAL_METRICS,
-    totalMarketCap,
-    marketCapChange24h: previousMarketCap > 0
-      ? ((totalMarketCap - previousMarketCap) / previousMarketCap) * 100
-      : 0,
-    volume24h: cryptos.reduce((sum, coin) => sum + coin.volume24h, 0),
-    trackedAssets: cryptos.length
-  };
-=======
   const activeCoin = cryptos.find((c) => (c.id === activeCoinId || c.coinId === activeCoinId)) || cryptos[0] || INITIAL_CRYPTO_LIST[0];
->>>>>>> Stashed changes
 
   return (
     <CryptoContext.Provider
