@@ -2,6 +2,8 @@ import React from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { formatUSD } from '../utils/formatters';
 import {
+  Home,
+  Info,
   TrendingUp,
   BrainCircuit,
   Bot,
@@ -19,12 +21,14 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAssistant, onOpenAuth })
   const { user, switchRole, wallet } = useCrypto();
 
   const navItems = [
+    { id: 'home', label: 'Home', icon: Home },
     { id: 'dashboard', label: 'Markets', icon: TrendingUp },
     { id: 'prediction', label: 'AI Prediction', icon: BrainCircuit, badge: 'AI ML' },
     { id: 'trading', label: 'Paper Trading & Bots', icon: Bot, badge: 'Sim' },
     { id: 'education', label: 'Academy', icon: GraduationCap },
     { id: 'sentiment', label: 'News & Sentiment', icon: Newspaper },
     { id: 'portfolio', label: 'Portfolio', icon: PieChart },
+    { id: 'about', label: 'About', icon: Info },
     { id: 'admin', label: 'Admin', icon: ShieldCheck, adminOnly: true }
   ];
 
@@ -36,11 +40,11 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAssistant, onOpenAuth })
           className="navbar-brand"
           role="button"
           tabIndex={0}
-          onClick={() => setActiveTab('dashboard')}
+          onClick={() => setActiveTab('home')}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault();
-              setActiveTab('dashboard');
+              setActiveTab('home');
             }
           }}
         >

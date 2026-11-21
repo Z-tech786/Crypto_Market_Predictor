@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { CryptoProvider, useCrypto } from './context/CryptoContext';
 import { Navbar } from './components/Navbar';
 import { TickerBar } from './components/TickerBar';
+import { HomePage } from './components/HomePage';
+import { AboutPage } from './components/AboutPage';
 import { MarketDashboard } from './components/MarketDashboard';
 import { AIPredictionView } from './components/AIPredictionView';
 import { SimulatedTrading } from './components/SimulatedTrading';
@@ -16,26 +18,29 @@ import { BrainCircuit } from 'lucide-react';
 import './App.css';
 
 const TAB_PATHS = {
+  home: '/',
   dashboard: '/markets',
   prediction: '/ai-prediction',
   trading: '/paper-trading',
   education: '/academy',
   sentiment: '/news-sentiment',
   portfolio: '/portfolio',
+  about: '/about',
   admin: '/admin'
 };
 
 const PATH_TABS = Object.fromEntries(
   Object.entries(TAB_PATHS).map(([tab, path]) => [path, tab])
 );
-PATH_TABS['/'] = 'dashboard';
+PATH_TABS['/'] = 'home';
+PATH_TABS['/home'] = 'home';
 
 const normalizePath = (path) => path.replace(/\/+$/, '') || '/';
 
 function MainApp() {
   const [activeTab, setActiveTab] = useState(() => {
     const path = normalizePath(window.location.pathname);
-    return PATH_TABS[path] || 'dashboard';
+    return PATH_TABS[path] || 'home';
   });
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -45,7 +50,7 @@ function MainApp() {
   useEffect(() => {
     const syncTabFromPath = () => {
       const path = normalizePath(window.location.pathname);
-      const tab = PATH_TABS[path] || 'dashboard';
+      const tab = PATH_TABS[path] || 'home';
       setActiveTab(tab);
 
       if (path !== TAB_PATHS[tab]) {
@@ -97,6 +102,14 @@ function MainApp() {
 
       {/* 3. Main Views Content Container */}
       <main className="main-content-layout">
+        {activeTab === 'home' && (
+          <HomePage onNavigate={navigateToTab} />
+        )}
+
+        {activeTab === 'about' && (
+          <AboutPage onNavigate={navigateToTab} />
+        )}
+
         {activeTab === 'dashboard' && (
           <MarketDashboard
             onNavigateToPrediction={handleNavigateToPrediction}
