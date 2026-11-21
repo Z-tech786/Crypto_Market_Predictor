@@ -25,7 +25,14 @@ router.put('/users/:id/role', async (req, res) => {
   const userId = req.params.id;
   const roles = ['student', 'trader', 'admin'];
 
-  
+  try {
+    let user = await User.findById(userId);
+    if (user) {
+      const nextRole = roles[(roles.indexOf(user.role) + 1) % roles.length];
+      user.role = nextRole;
+      await user.save();
+      return res.json({ success: true, message: `User role updated to ${nextRole.toUpperCase()}`, data: user });
+    }
 
     const mUser = memoryUsers.find(u => u.id === userId || u._id === userId);
     if (mUser) {
