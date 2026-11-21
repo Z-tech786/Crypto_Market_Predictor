@@ -4,6 +4,7 @@ import { Navbar } from './components/Navbar';
 import { TickerBar } from './components/TickerBar';
 import { HomePage } from './components/HomePage';
 import { AboutPage } from './components/AboutPage';
+import { BolCryptoChatBot } from './components/BolCryptoChatBot';
 import { MarketDashboard } from './components/MarketDashboard';
 import { AIPredictionView } from './components/AIPredictionView';
 import { SimulatedTrading } from './components/SimulatedTrading';
@@ -21,6 +22,7 @@ const TAB_PATHS = {
   home: '/',
   dashboard: '/markets',
   prediction: '/ai-prediction',
+  chat: '/bol-ai',
   trading: '/paper-trading',
   education: '/academy',
   sentiment: '/news-sentiment',
@@ -34,6 +36,8 @@ const PATH_TABS = Object.fromEntries(
 );
 PATH_TABS['/'] = 'home';
 PATH_TABS['/home'] = 'home';
+PATH_TABS['/bol-ai'] = 'chat';
+PATH_TABS['/chat'] = 'chat';
 
 const normalizePath = (path) => path.replace(/\/+$/, '') || '/';
 
@@ -119,6 +123,10 @@ function MainApp() {
 
         {activeTab === 'prediction' && (
           <AIPredictionView onNavigateToTrading={handleNavigateToTrading} />
+        )}
+
+        {activeTab === 'chat' && (
+          <BolCryptoChatBot />
         )}
 
         {activeTab === 'trading' && <SimulatedTrading />}

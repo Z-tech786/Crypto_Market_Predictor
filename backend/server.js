@@ -19,6 +19,7 @@ import newsRoutes from './routes/newsRoutes.js';
 import botRoutes from './routes/botRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import assistantRoutes from './routes/assistantRoutes.js';
+import groqChatRoutes from './routes/groqChatRoutes.js';
 
 dotenv.config();
 
@@ -42,6 +43,7 @@ app.use('/api/news', newsRoutes);
 app.use('/api/bots', botRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/assistant', assistantRoutes);
+app.use('/api/groq-chat', groqChatRoutes);
 
 // Root Health & Metadata
 app.get('/', (req, res) => {

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useCrypto } from '../context/CryptoContext';
+import { CoinDetailView } from './CoinDetailView';
 import { formatUSD, formatCompact, formatPercent } from '../utils/formatters';
 import {
   TrendingUp,
@@ -18,8 +19,24 @@ import {
 export const MarketDashboard = ({ onNavigateToPrediction, onNavigateToTrading }) => {
   const { cryptos, globalMetrics, watchlist, toggleWatchlist, setActiveCoinId } = useCrypto();
 
+  const [selectedCoinId, setSelectedCoinId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const handleCoinClick = (coinId) => {
+    setActiveCoinId(coinId);
+    setSelectedCoinId(coinId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const selectedCoin = selectedCoinId
+    ? cryptos.find(
+        (c) =>
+          c.id === selectedCoinId ||
+          c.coinId === selectedCoinId ||
+          c.symbol.toLowerCase() === selectedCoinId.toLowerCase()
+      )
+    : null;
 
   // Categories
   const categories = ['All', 'Watchlist', 'Layer 1', 'Smart Contracts', 'DeFi', 'Oracle / AI'];
@@ -47,6 +64,18 @@ export const MarketDashboard = ({ onNavigateToPrediction, onNavigateToTrading })
   const topLosers = useMemo(() => {
     return [...cryptos].sort((a, b) => a.change24h - b.change24h).slice(0, 3);
   }, [cryptos]);
+
+  // If user selected a coin (e.g. clicked Bitcoin or any other coin), show the rich Coin Live & Info view
+  if (selectedCoin) {
+    return (
+      <CoinDetailView
+        coin={selectedCoin}
+        onBack={() => setSelectedCoinId(null)}
+        onNavigateToPrediction={onNavigateToPrediction}
+        onNavigateToTrading={onNavigateToTrading}
+      />
+    );
+  }
 
   // Mini sparkline SVG generator
   const renderSparkline = (data, isPositive, color) => {
@@ -139,10 +168,8 @@ export const MarketDashboard = ({ onNavigateToPrediction, onNavigateToTrading })
               <div
                 key={coin.id}
                 className="highlight-item"
-                onClick={() => {
-                  setActiveCoinId(coin.id);
-                  onNavigateToPrediction(coin.id);
-                }}
+                onClick={() => handleCoinClick(coin.id)}
+                title={`Click to view live analytics & info for ${coin.name}`}
               >
                 <div className="highlight-left">
                   <span className="highlight-symbol">{coin.symbol}</span>
@@ -169,10 +196,8 @@ export const MarketDashboard = ({ onNavigateToPrediction, onNavigateToTrading })
               <div
                 key={coin.id}
                 className="highlight-item"
-                onClick={() => {
-                  setActiveCoinId(coin.id);
-                  onNavigateToPrediction(coin.id);
-                }}
+                onClick={() => handleCoinClick(coin.id)}
+                title={`Click to view live analytics & info for ${coin.name}`}
               >
                 <div className="highlight-left">
                   <span className="highlight-symbol">{coin.symbol}</span>
@@ -248,7 +273,13 @@ export const MarketDashboard = ({ onNavigateToPrediction, onNavigateToTrading })
                 const is7dUp = coin.change7d >= 0;
 
                 return (
-                  <tr key={coin.id} className="crypto-row">
+                  <tr
+                    key={coin.id}
+                    className="crypto-row"
+                    onClick={() => handleCoinClick(coin.id)}
+                    style={{ cursor: 'pointer' }}
+                    title={`Click to view live analytics & information for ${coin.name}`}
+                  >
                     {/* Watchlist Star */}
                     <td>
                       <button
@@ -270,10 +301,7 @@ export const MarketDashboard = ({ onNavigateToPrediction, onNavigateToTrading })
                     <td>
                       <div
                         className="asset-cell"
-                        onClick={() => {
-                          setActiveCoinId(coin.id);
-                          onNavigateToPrediction(coin.id);
-                        }}
+                        onClick={() => handleCoinClick(coin.id)}
                       >
                         <div
                           className="coin-icon-circle"
@@ -334,7 +362,8 @@ export const MarketDashboard = ({ onNavigateToPrediction, onNavigateToTrading })
                     <td className="text-center actions-cell">
                       <button
                         className="btn-action-predict"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setActiveCoinId(coin.id);
                           onNavigateToPrediction(coin.id);
                         }}
@@ -346,7 +375,8 @@ export const MarketDashboard = ({ onNavigateToPrediction, onNavigateToTrading })
 
                       <button
                         className="btn-action-trade"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setActiveCoinId(coin.id);
                           onNavigateToTrading(coin.id);
                         }}

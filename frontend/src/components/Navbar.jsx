@@ -14,7 +14,8 @@ import {
   Sparkles,
   Wallet,
   User,
-  SlidersHorizontal
+  SlidersHorizontal,
+  MessageSquare
 } from 'lucide-react';
 
 export const Navbar = ({ activeTab, setActiveTab, onOpenAssistant, onOpenAuth }) => {
@@ -24,6 +25,7 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAssistant, onOpenAuth })
     { id: 'home', label: 'Home', icon: Home },
     { id: 'dashboard', label: 'Markets', icon: TrendingUp },
     { id: 'prediction', label: 'AI Prediction', icon: BrainCircuit, badge: 'AI ML' },
+    { id: 'chat', label: 'Bol AI', icon: MessageSquare, badge: 'Groq' },
     { id: 'trading', label: 'Paper Trading & Bots', icon: Bot, badge: 'Sim' },
     { id: 'education', label: 'Academy', icon: GraduationCap },
     { id: 'sentiment', label: 'News & Sentiment', icon: Newspaper },
