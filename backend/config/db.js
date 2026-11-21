@@ -10,9 +10,5 @@ export const connectDB = async () => {
     });
     console.log(`[MongoDB] Connected successfully: ${conn.connection.host}/${conn.connection.name}`);
     return true;
-  } catch (err) {
-    console.warn(`[MongoDB Warning] Could not connect to MongoDB server: ${err.message}`);
-    console.warn(`[MongoDB Note] Backend will operate with graceful mock/in-memory data layer if MongoDB daemon is offline.`);
-    return false;
   }
 };
