@@ -29,7 +29,12 @@ router.get('/sentiment-radar', (req, res) => {
         lastWeek: 64,
         lastMonth: 58
       },
-   
+      socialSentiment: {
+        positivePercent: 68,
+        neutralPercent: 20,
+        negativePercent: 12,
+        totalMentions24h: '1,420,000+'
+      },
       whaleFlow: {
         accumulationScore: '+78 / 100',
         exchangeNetInflow: '-14,250 BTC (Net Cold Storage Outflow)',
