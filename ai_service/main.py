@@ -156,25 +156,31 @@ def fetch_binance_klines(symbol: str, force_refresh: bool = False) -> Dict[str, 
     closes = [round(p, 2) for p in price_curve[-total_days:]]
     dates = [(start_dt + datetime.timedelta(days=i)).strftime("%Y-%m-%d") for i in range(total_days)]
 
-   
+    result = {
+        "symbol": norm_symbol,
+        "source": "Synthesized 1-Jan-2024 Continuous Historical Baseline",
+        "status": "fallback",
+        "startDate": "2024-01-01",
+        "endDate": today.strftime("%Y-%m-%d"),
+        "totalCandles": total_days,
+        "latestPrice": closes[-1],
+        "high24h": round(closes[-1] * 1.025, 2),
+        "low24h": round(closes[-1] * 0.978, 2),
+        "change24h": 1.85,
+        "volume24h": 1420500.0,
+        "closes": closes,
+        "highs": [round(c * 1.015, 2) for c in closes],
+        "lows": [round(c * 0.985, 2) for c in closes],
+        "dates": dates,
+        "cachedAt": now
+    }
+    BINANCE_CACHE[norm_symbol] = result
+    return result
 
 # ---------------------------------------------------------
 # Model 1: RSS (Resistance and Support System) - Static Formula
 # ---------------------------------------------------------
-def compute_rss(spot_price: float, high: float, low: float, horizon_days: int) -> Dict[str, Any]:
-    c = spot_price
-    h = max(high, spot_price * 1.008)
-    l = min(low, spot_price * 0.992)
-    diff = h - l
 
-    # Classic Floor Trader Pivot Points Formula
-    pp = (h + l + c) / 3.0
-    r1 = 2.0 * pp - l
-    s1 = 2.0 * pp - h
-    r2 = pp + diff
-    s2 = pp - diff
-    r3 = h + 2.0 * (pp - l)
-    s3 = l - 2.0 * (h - pp)
 
     fib = {
         "fib0": round(l, 2),
