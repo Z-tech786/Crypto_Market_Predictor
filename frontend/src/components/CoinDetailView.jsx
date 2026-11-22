@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { getCoinInfo } from '../data/coinInfoData';
-import { formatUSD, formatCompact, formatPercent } from '../utils/formatters';
+import { formatUSD, formatCompact, formatPercent, formatPKR } from '../utils/formatters';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -305,10 +305,13 @@ export const CoinDetailView = ({
         <div className="live-price-box">
           <div className="live-price-label">
             <span className="live-pulse-dot"></span>
-            <span>Live Spot Price (USD)</span>
+            <span>Live Spot Price (USD / PKR)</span>
           </div>
           <div className="live-price-large">
             {formatUSD(coin.price)}
+          </div>
+          <div style={{ fontSize: '14px', color: '#34d399', fontWeight: 700, fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
+            ~ {formatPKR(coin.price)}
           </div>
 
           <div className="price-change-row">

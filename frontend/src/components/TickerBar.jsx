@@ -1,6 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { formatUSD, formatPercent } from '../utils/formatters';
+import { formatUSD, formatPercent, formatPKR } from '../utils/formatters';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 export const TickerBar = () => {

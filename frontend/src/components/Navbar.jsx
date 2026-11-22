@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { formatUSD } from '../utils/formatters';
+import { formatUSD, formatPKR } from '../utils/formatters';
+import { PakistanFlag } from './PakistanFlag';
 import {
   Home,
   Info,
@@ -36,6 +37,56 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAssistant, onOpenAuth })
 
   return (
     <header className="navbar-container">
+      {/* 🇵🇰 Top Bismillah & National Urdu Banner */}
+      <div style={{
+        background: 'linear-gradient(90deg, #013818 0%, #064e3b 25%, #0b1329 50%, #064e3b 75%, #013818 100%)',
+        borderBottom: '1px solid rgba(16, 185, 129, 0.35)',
+        padding: '5px 24px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '10px'
+      }}>
+        {/* Left: Pakistani Slogan in Urdu */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          color: '#34d399',
+          fontWeight: 700,
+          fontSize: '13px'
+        }}>
+          <PakistanFlag width={22} height={14} />
+          <span>نیورو کرپٹو : پاکستان کا پہلا اپنا کرپٹو پلیٹ فارم</span>
+        </div>
+
+        {/* Center: Full Bismillah in Arabic calligraphy styling */}
+        <div style={{
+          fontFamily: "'Amiri', 'Traditional Arabic', 'Scheherazade New', 'Noto Naskh Arabic', serif",
+          fontSize: '17px',
+          fontWeight: 700,
+          color: '#fef08a',
+          letterSpacing: '1px',
+          textShadow: '0 0 12px rgba(254, 240, 138, 0.45)',
+          direction: 'rtl'
+        }}>
+          بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+        </div>
+
+        {/* Right: National Academic Research badge */}
+        <div style={{
+          fontSize: '11px',
+          color: '#cbd5e1',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px'
+        }}>
+          <span style={{ color: '#10b981', fontSize: '10px' }}>●</span>
+          <span>FAST-NUCES FYP • فرحان اعجاز اور زین العابدین</span>
+        </div>
+      </div>
+
       <div className="navbar-top">
         {/* Brand */}
         <div
@@ -58,7 +109,9 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAssistant, onOpenAuth })
             <div className="brand-title">
               NeuroCrypto <span className="brand-badge">AI 2.0</span>
             </div>
-            <div className="brand-subtitle">Prediction & Educational Ecosystem</div>
+            <div className="brand-subtitle" style={{ color: '#34d399', fontWeight: 600 }}>
+              نیورو کرپٹو — پاکستان کا پہلا اپنا کرپٹو پلیٹ فارم
+            </div>
           </div>
         </div>
 
@@ -73,7 +126,12 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAssistant, onOpenAuth })
             <Wallet size={16} className="text-emerald-400" />
             <div className="wallet-pill-info">
               <span className="wallet-label">Paper Balance</span>
-              <span className="wallet-value">{formatUSD(wallet.usdtBalance)}</span>
+              <span className="wallet-value">
+                {formatUSD(wallet.usdtBalance)}
+                <span style={{ fontSize: '10px', color: '#34d399', display: 'block', fontWeight: 600 }}>
+                  ~ {formatPKR(wallet.usdtBalance)}
+                </span>
+              </span>
             </div>
           </div>
 
@@ -142,3 +200,5 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAssistant, onOpenAuth })
     </header>
   );
 };
+
+export default Navbar;

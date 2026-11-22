@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCrypto } from '../context/CryptoContext';
-import { formatUSD, formatPercent } from '../utils/formatters';
+import { formatUSD, formatPercent, formatPKR } from '../utils/formatters';
 import {
   TrendingUp,
   BrainCircuit,
@@ -213,6 +213,9 @@ export const HomePage = ({ onNavigate }) => {
 
                 <div className="coin-card-price">
                   {formatUSD(coin.price || 0)}
+                  <div style={{ fontSize: '11px', color: '#34d399', fontWeight: 600, fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
+                    ~ {formatPKR(coin.price || 0)}
+                  </div>
                 </div>
 
                 <div className="coin-card-footer">

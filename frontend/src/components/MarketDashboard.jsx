@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useCrypto } from '../context/CryptoContext';
 import { CoinDetailView } from './CoinDetailView';
-import { formatUSD, formatCompact, formatPercent } from '../utils/formatters';
+import { formatUSD, formatCompact, formatPercent, formatPKR } from '../utils/formatters';
 import {
   TrendingUp,
   TrendingDown,
