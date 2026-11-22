@@ -53,7 +53,13 @@ Transactions are cryptographically verified by network nodes through Proof-of-Wo
     description: `Ethereum is a global, decentralized computing platform that pioneers smart contract functionality. Proposed in late 2013 by programmer Vitalik Buterin and officially launched in July 2015, Ethereum enables software developers to build and deploy immutable decentralized applications (dApps) across financial services, gaming, governance, and non-fungible tokens (NFTs).
 
 In September 2022, Ethereum executed "The Merge", transitioning its consensus engine from energy-intensive Proof-of-Work to Proof-of-Stake (PoS). This reduced network electrical consumption by over 99.9% while introducing validator staking yields. Through EIP-1559, a portion of every transaction base fee is permanently burned, making ETH supply deflationary during periods of elevated network activity.`,
- 
+    keyFeatures: [
+      'Turing-complete Ethereum Virtual Machine (EVM) powering decentralized logic',
+      'Proof-of-Stake consensus with over 30 million ETH staked securing the network',
+      'EIP-1559 programmatic base-fee burn mechanism inducing Ultrasound Money dynamics',
+      'Vibrant Layer-2 rollup scaling ecosystem (Arbitrum, Optimism, Base, zkSync)',
+      'Foundation for ERC-20 token standards and the entire decentralized finance (DeFi) industry'
+    ],
     useCases: [
       'Automated Decentralized Finance (DeFi) lending, borrowing, and automated market making (DEXs)',
       'Digital Identity, Non-Fungible Tokens (NFTs), and Tokenized Real-World Assets (RWAs)',
