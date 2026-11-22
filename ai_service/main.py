@@ -597,7 +597,12 @@ def retrain_binance(req: RetrainRequest):
     }
 
 # Backward compatible /predict endpoint
-
+@app.post("/predict")
+def legacy_predict(req: PredictionRequest):
+    sym = req.symbol or req.coinId or "BTC"
+    full_data = generate_tri_model_predictions(symbol=sym, timeframe=req.timeframe or "7d")
+    adv = full_data["models"]["advance_lstm"]
+    
     return {
         "success": True,
         "data": {
